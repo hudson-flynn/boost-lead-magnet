@@ -230,51 +230,45 @@ function ChallengeImage({ label, color, logoUrl }) {
   );
 }
 
-// Progress bar with arrow
+// Progress bar with arrow - arrow protrudes into gray track at fill endpoint
 function ProgressBarWithArrow({ pct, color, height = 24 }) {
   const cappedPct = Math.min(pct, 100);
-  const fillWidth = Math.max(cappedPct, 10);
-  const arrowSize = height * 0.6;
+  const fillWidth = Math.max(cappedPct, 3);
+  const arrowW = Math.round(height * 0.65);
 
   return (
-    <div style={{ position: "relative", paddingRight: arrowSize }}>
+    <div style={{ position: "relative", height }}>
+      {/* Gray track */}
       <div style={{
+        position: "absolute", inset: 0,
         background: "#e0e0e0",
         borderRadius: 4,
-        height,
-        overflow: "hidden",
-        position: "relative"
+      }} />
+      {/* Filled portion */}
+      <div style={{
+        position: "absolute", top: 0, left: 0, bottom: 0,
+        width: `${fillWidth}%`,
+        background: color,
+        borderRadius: fillWidth >= 99 ? 4 : "4px 0 0 4px",
+        display: "flex", alignItems: "center", justifyContent: "flex-end",
+        paddingRight: arrowW + 6,
+        boxSizing: "border-box",
+        minWidth: arrowW + 28,
       }}>
-        <div style={{
-          background: color,
-          height: "100%",
-          width: fillWidth + "%",
-          borderRadius: 4,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          paddingRight: 10,
-          position: "relative",
-          transition: "width 0.6s ease-out"
-        }}>
-          <span style={{
-            color: "#fff",
-            fontSize: height > 20 ? "0.8rem" : "0.7rem",
-            fontWeight: 700
-          }}>
-            {pct}%
-          </span>
-        </div>
+        <span style={{ color: "#fff", fontSize: height > 20 ? "0.8rem" : "0.72rem", fontWeight: 700 }}>
+          {pct}%
+        </span>
       </div>
+      {/* Arrow — left base at fill end, tip protrudes into gray track */}
       <div style={{
         position: "absolute",
         top: 0,
-        right: 0,
-        width: 0,
-        height: 0,
+        left: `${fillWidth}%`,
+        width: 0, height: 0,
         borderTop: `${height / 2}px solid transparent`,
         borderBottom: `${height / 2}px solid transparent`,
-        borderLeft: `${arrowSize}px solid ${color}`,
+        borderLeft: `${arrowW}px solid ${color}`,
+        zIndex: 2,
       }} />
     </div>
   );
@@ -511,78 +505,63 @@ export default function BoostLeadMagnet() {
         </div>
       </div>
 
-      {/* ── HERO - SPLIT LAYOUT ── */}
-      <div style={{ marginTop: 48 }}>
+      {/* ── HERO - Full image with semi-transparent overlay ── */}
+      <div style={{ marginTop: 48, position: "relative", minHeight: 580 }}>
+        {/* Background image — full height */}
         <div style={{
-          height: 360,
+          position: "absolute", inset: 0,
           backgroundImage: `url(${DEFAULT_HERO_IMAGE})`,
           backgroundSize: "cover",
-          backgroundPosition: "center",
-          position: "relative"
+          backgroundPosition: "center top",
+        }} />
+
+        {/* Logo box + hamburger — top of image */}
+        <div style={{
+          position: "absolute", top: "1.5rem", left: 0, right: 0,
+          display: "flex", justifyContent: "space-between", alignItems: "flex-start",
+          padding: "0 2rem",
+          zIndex: 10,
         }}>
           <div style={{
-            position: "absolute",
-            top: "1.5rem",
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "100%",
-            maxWidth: 1100,
-            padding: "0 1.5rem",
-            boxSizing: "border-box",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start"
+            background: "#fff", borderRadius: 4,
+            padding: "0.75rem 1.25rem",
+            display: "flex", alignItems: "center", gap: "0.75rem",
+            boxShadow: "0 2px 8px rgba(0,0,0,.2)",
           }}>
-            <div style={{
-              background: "#fff",
-              borderRadius: 4,
-              padding: "0.75rem 1.25rem",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.75rem",
-              boxShadow: "0 2px 8px rgba(0,0,0,.15)"
-            }}>
-              {logoPreview ? (
-                <img src={logoPreview} alt={sn} style={{ height: 50, maxWidth: 180, objectFit: "contain" }} />
-              ) : (
-                <>
-                  <CrestIcon color={pc} size={36} />
-                  <div>
-                    <div style={{ fontSize: "1.1rem", fontWeight: 700, color: pc, lineHeight: 1.2 }}>{fn}</div>
-                    <div style={{ fontSize: "0.7rem", color: "#666", letterSpacing: "0.05em" }}>{sn.toUpperCase()}</div>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div style={{
-              cursor: "pointer",
-              display: "flex",
-              flexDirection: "column",
-              gap: "5px",
-              padding: "0.5rem"
-            }}>
-              <div style={{ width: 28, height: 3, background: sc, borderRadius: 2 }} />
-              <div style={{ width: 28, height: 3, background: sc, borderRadius: 2 }} />
-              <div style={{ width: 28, height: 3, background: sc, borderRadius: 2 }} />
-            </div>
+            {logoPreview ? (
+              <img src={logoPreview} alt={sn} style={{ height: 50, maxWidth: 180, objectFit: "contain" }} />
+            ) : (
+              <>
+                <CrestIcon color={pc} size={36} />
+                <div>
+                  <div style={{ fontSize: "1.1rem", fontWeight: 700, color: pc, lineHeight: 1.2 }}>{fn}</div>
+                  <div style={{ fontSize: "0.7rem", color: "#666", letterSpacing: "0.05em" }}>{sn.toUpperCase()}</div>
+                </div>
+              </>
+            )}
+          </div>
+          <div style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: "5px", padding: "0.5rem" }}>
+            <div style={{ width: 28, height: 3, background: "#fff", borderRadius: 2 }} />
+            <div style={{ width: 28, height: 3, background: "#fff", borderRadius: 2 }} />
+            <div style={{ width: 28, height: 3, background: "#fff", borderRadius: 2 }} />
           </div>
         </div>
 
-        <div style={{ background: pc }}>
-          <div style={{ height: 4, background: sc }} />
-
-          <div style={{ maxWidth: 1100, margin: "0 auto", padding: "2.5rem 1.5rem 3rem", display: "flex", gap: "2.5rem", alignItems: "flex-start" }}>
+        {/* Semi-transparent primary color overlay — bottom content area */}
+        <div style={{
+          position: "absolute", bottom: 0, left: 0, right: 0,
+          background: pc + "ee",
+          borderTop: `4px solid ${sc}`,
+        }}>
+          <div style={{ maxWidth: 1100, margin: "0 auto", padding: "2.5rem 2rem 3rem", display: "flex", gap: "2.5rem", alignItems: "flex-start" }}>
             <div style={{ flex: 1 }}>
               <h1 style={{ fontSize: "2.25rem", fontWeight: 700, color: "#fff", margin: "0 0 1.25rem", lineHeight: 1.2 }}>{fn}</h1>
-              <p style={{ fontSize: "1rem", color: "rgba(255,255,255,.95)", lineHeight: 1.8, margin: "0 0 1.75rem", maxWidth: 620 }}>
+              <p style={{ fontSize: "1rem", color: "rgba(255,255,255,.95)", lineHeight: 1.8, margin: "0 0 1.75rem", maxWidth: 580 }}>
                 When you make a gift to {sn}, you invest in our students and faculty. The {fn} is essential to our school, supporting current-year operating expenses not covered by tuition. We rely on our school community to contribute meaningfully to ensure we can provide an outstanding education for every student so that they may develop the skills to successfully navigate the future with confidence.
               </p>
-
-              <div style={{ marginBottom: "1rem", maxWidth: 580 }}>
-                <ProgressBarWithArrow pct={pctFunded} color={sc} height={26} />
+              <div style={{ marginBottom: "1.25rem", maxWidth: 560 }}>
+                <ProgressBarWithArrow pct={pctFunded} color={sc} height={28} />
               </div>
-
               <div style={{ display: "flex", gap: "3rem", alignItems: "baseline" }}>
                 <div>
                   <span style={{ fontSize: "2rem", fontWeight: 700, color: "#fff" }}>{fmtD(amtRaised)}</span>
@@ -595,22 +574,24 @@ export default function BoostLeadMagnet() {
               </div>
             </div>
 
+            {/* Right: challenge banner + CTA */}
             <div style={{ flex: "0 0 300px", paddingTop: "0.5rem" }}>
               {form.showChallenges && (
                 <div
                   onClick={() => setActiveTab("challenges")}
                   style={{
-                    background: "rgba(255,255,255,.15)",
+                    background: "#fff",
+                    border: `1px solid ${sc}`,
                     borderRadius: 4,
                     padding: "0.75rem 1rem",
                     marginBottom: "1rem",
                     fontSize: "0.9rem",
-                    color: "#fff",
+                    color: "#333",
                     fontWeight: 600,
                     cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
-                    gap: "0.5rem"
+                    gap: "0.5rem",
                   }}
                 >
                   <span style={{ color: sc }}>⚡</span> There is 1 active challenge!
@@ -620,6 +601,9 @@ export default function BoostLeadMagnet() {
             </div>
           </div>
         </div>
+
+        {/* Spacer so the relative container is tall enough */}
+        <div style={{ height: 580 }} />
       </div>
 
       {/* ── GIVING BUCKETS ── */}
@@ -668,7 +652,7 @@ export default function BoostLeadMagnet() {
                 fontWeight: 600,
                 fontFamily: "inherit",
                 color: "#fff",
-                borderBottom: activeTab === t.key ? "4px solid rgba(255,255,255,.5)" : "4px solid transparent",
+                borderBottom: activeTab === t.key ? "3px solid rgba(255,255,255,.85)" : "3px solid transparent",
                 display: "flex",
                 alignItems: "center",
                 gap: "0.5rem",
@@ -727,18 +711,20 @@ export default function BoostLeadMagnet() {
                     </div>
 
                     {MOCK_LEADERBOARD.slice(0, 2).map((r, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.75rem 0", background: i % 2 === 1 ? "#f9f9f9" : "transparent" }}>
-                        <span style={{ color: pc, fontWeight: 500, fontSize: "0.9rem", minWidth: 130, cursor: "pointer", textDecoration: "underline" }}>{r.affiliation}</span>
-                        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.75rem 0", borderBottom: "1px solid #e9e9e9" }}>
+                        <span style={{ color: sc, fontWeight: 500, fontSize: "0.9rem", minWidth: 130, cursor: "pointer", textDecoration: "underline" }}>{r.affiliation}</span>
+                        <div style={{ flex: 1 }}>
                           <div style={{
                             background: pc,
                             borderRadius: 4,
                             height: 28,
                             width: Math.round((r.donors / maxLB) * 100) + "%",
                             minWidth: 40,
-                            transition: "width 0.6s ease-out"
-                          }} />
-                          <span style={{ color: "#333", fontSize: "0.85rem", fontWeight: 700 }}>{r.donors}</span>
+                            display: "flex", alignItems: "center", justifyContent: "flex-end",
+                            paddingRight: 8, boxSizing: "border-box",
+                          }}>
+                            <span style={{ color: "#fff", fontSize: "0.82rem", fontWeight: 700 }}>{r.donors}</span>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -861,24 +847,26 @@ export default function BoostLeadMagnet() {
             <div>
               <h2 style={{ fontSize: "1.35rem", fontWeight: 700, color: "#333", margin: "0 0 1.5rem" }}>{sn} Community Leaderboard</h2>
 
-              <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "0.75rem 0", marginBottom: "0.5rem" }}>
-                <span style={{ color: pc, fontWeight: 600, fontSize: "0.95rem", minWidth: 150, textDecoration: "underline", cursor: "pointer" }}>Affiliation</span>
-                <span style={{ color: pc, fontWeight: 600, fontSize: "0.95rem", textDecoration: "underline", cursor: "pointer" }}># Donors ↓</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "0.75rem 0", borderBottom: "1px solid #e9e9e9", marginBottom: "0" }}>
+                <span style={{ color: sc, fontWeight: 600, fontSize: "0.95rem", minWidth: 150, textDecoration: "underline", cursor: "pointer" }}>Affiliation</span>
+                <span style={{ color: sc, fontWeight: 600, fontSize: "0.95rem", textDecoration: "underline", cursor: "pointer" }}># Donors ↓</span>
               </div>
 
               {MOCK_LEADERBOARD.map((r, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "0.85rem 0.5rem", background: i % 2 === 1 ? "#f7f7f7" : "transparent" }}>
-                  <span style={{ color: pc, fontWeight: 500, fontSize: "0.95rem", minWidth: 150, cursor: "pointer", textDecoration: "underline" }}>{r.affiliation}</span>
-                  <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "0.85rem 0", borderBottom: "1px solid #e9e9e9" }}>
+                  <span style={{ color: sc, fontWeight: 500, fontSize: "0.95rem", minWidth: 150, cursor: "pointer", textDecoration: "underline" }}>{r.affiliation}</span>
+                  <div style={{ flex: 1 }}>
                     <div style={{
                       background: pc,
                       borderRadius: 4,
                       height: 32,
                       width: Math.round((r.donors / maxLB) * 100) + "%",
                       minWidth: 40,
-                      transition: "width 0.6s ease-out"
-                    }} />
-                    <span style={{ color: "#333", fontSize: "0.9rem", fontWeight: 700 }}>{r.donors}</span>
+                      display: "flex", alignItems: "center", justifyContent: "flex-end",
+                      paddingRight: 10, boxSizing: "border-box",
+                    }}>
+                      <span style={{ color: "#fff", fontSize: "0.88rem", fontWeight: 700 }}>{r.donors}</span>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -889,19 +877,19 @@ export default function BoostLeadMagnet() {
 
               <h2 style={{ fontSize: "1.35rem", fontWeight: 700, color: "#333", margin: "3rem 0 1.5rem" }}>Current Family Participation by Class</h2>
 
-              <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "0.75rem 0", marginBottom: "0.5rem" }}>
-                <span style={{ color: pc, fontWeight: 600, fontSize: "0.95rem", minWidth: 80, textDecoration: "underline", cursor: "pointer" }}>Class year</span>
-                <span style={{ color: pc, fontWeight: 600, fontSize: "0.95rem", textDecoration: "underline", cursor: "pointer" }}>Participation ↓</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "0.75rem 0", borderBottom: "1px solid #e9e9e9" }}>
+                <span style={{ color: sc, fontWeight: 600, fontSize: "0.95rem", minWidth: 90, textDecoration: "underline", cursor: "pointer" }}>Class year</span>
+                <span style={{ color: sc, fontWeight: 600, fontSize: "0.95rem", textDecoration: "underline", cursor: "pointer" }}>Participation ↓</span>
               </div>
 
               {CLASS_PARTICIPATION.map((c, i) => (
-                <div key={i} style={{ padding: "0.85rem 0.5rem", background: i % 2 === 1 ? "#f7f7f7" : "transparent" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-                    <span style={{ color: pc, fontWeight: 500, fontSize: "0.95rem", minWidth: 80, cursor: "pointer", textDecoration: "underline" }}>{c.year}</span>
+                <div key={i} style={{ padding: "0.85rem 0", borderBottom: "1px solid #e9e9e9" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", marginBottom: "0.5rem" }}>
+                    <span style={{ color: sc, fontWeight: 500, fontSize: "0.95rem", minWidth: 90, cursor: "pointer", textDecoration: "underline" }}>{c.year}</span>
                     <span style={{ fontSize: "0.85rem", color: "#666" }}>{c.supported} of {c.total} have supported</span>
                   </div>
-                  <div style={{ marginTop: "0.5rem", marginLeft: 96 }}>
-                    <ProgressBarWithArrow pct={c.pct} color={pc} height={24} />
+                  <div style={{ marginLeft: 106 }}>
+                    <ProgressBarWithArrow pct={c.pct} color={pc} height={26} />
                   </div>
                 </div>
               ))}

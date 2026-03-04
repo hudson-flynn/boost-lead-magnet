@@ -1,5 +1,8 @@
 import { useState, useRef } from "react";
 
+// ─── Sheet endpoint — paste your Apps Script Web App URL here ────────────────
+const SHEET_ENDPOINT = "YOUR_APPS_SCRIPT_URL_HERE";
+
 // ─── Data (Fully Anonymized) ─────────────────────────────────────────────────
 
 const GIVING_BUCKETS = [
@@ -340,7 +343,34 @@ export default function BoostLeadMagnet() {
     if (file) { updateForm("logo", file); const r = new FileReader(); r.onload = (ev) => setLogoPreview(ev.target.result); r.readAsDataURL(file); }
   };
   const canSubmit = form.schoolName.trim() && form.fundName.trim() && form.fundraisingGoal && form.supporterGoal && form.email.trim();
-  const handleSubmit = () => { if (!canSubmit) return; setStep("preview"); setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100); };
+  const handleSubmit = () => {
+    if (!canSubmit) return;
+
+    // Fire-and-forget — don't block the preview on network latency
+    if (SHEET_ENDPOINT && SHEET_ENDPOINT !== "YOUR_APPS_SCRIPT_URL_HERE") {
+      fetch(SHEET_ENDPOINT, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          schoolName:      form.schoolName,
+          fundName:        form.fundName,
+          email:           form.email,
+          fundraisingGoal: form.fundraisingGoal,
+          supporterGoal:   form.supporterGoal,
+          primaryColor:    form.primaryColor,
+          secondaryColor:  form.secondaryColor,
+          currentPlatform: form.currentPlatform,
+          currentCrm:      form.currentCrm,
+          showChallenges:  form.showChallenges,
+          showLeaderboards: form.showLeaderboards,
+        }),
+      }).catch(() => {}); // silently ignore network errors
+    }
+
+    setStep("preview");
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100);
+  };
 
   const goalNum = parseInt(form.fundraisingGoal) || 100000;
   const suppGoalNum = parseInt(form.supporterGoal) || 500;

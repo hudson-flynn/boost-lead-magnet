@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 
 // ─── Sheet endpoint — paste your Apps Script Web App URL here ────────────────
-const SHEET_ENDPOINT = "YOUR_APPS_SCRIPT_URL_HERE";
+const SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbwOyjIFKC7OWmvm_qFojRcKEpVePXA_X6O1GEYcXVgWqFyclYlFTXrIEMgCIt9xmCh7/exec";
 
 // ─── Data (Fully Anonymized) ─────────────────────────────────────────────────
 

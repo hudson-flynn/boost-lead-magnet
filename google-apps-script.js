@@ -36,11 +36,12 @@ function doPost(e) {
         "Current Platform",
         "Current CRM",
         "Show Challenges",
-        "Show Leaderboards"
+        "Show Leaderboards",
+        "Preview URL"
       ]);
 
       // Bold + freeze the header row
-      sheet.getRange(1, 1, 1, 12).setFontWeight("bold");
+      sheet.getRange(1, 1, 1, 13).setFontWeight("bold");
       sheet.setFrozenRows(1);
     }
 
@@ -56,7 +57,8 @@ function doPost(e) {
       data.currentPlatform || "Not specified",
       data.currentCrm      || "Not specified",
       data.showChallenges   ? "Yes" : "No",
-      data.showLeaderboards ? "Yes" : "No"
+      data.showLeaderboards ? "Yes" : "No",
+      data.previewUrl       || ""
     ]);
 
     return ContentService
@@ -85,7 +87,8 @@ function testPost() {
         currentPlatform: "GiveCampus",
         currentCrm: "Raiser's Edge / RE NXT",
         showChallenges: true,
-        showLeaderboards: true
+        showLeaderboards: true,
+        previewUrl: "https://boost-lead-magnet.vercel.app/#dGVzdA=="
       })
     }
   };

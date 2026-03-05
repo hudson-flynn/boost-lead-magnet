@@ -432,6 +432,9 @@ export default function BoostLeadMagnet() {
 
   const handleSubmit = () => {
     if (!canSubmit) return;
+    // Build the shareable URL first so we can include it in the sheet row
+    const previewHash = encodePreviewHash(form);
+    const previewUrl = `${window.location.origin}${window.location.pathname}#${previewHash}`;
     if (SHEET_ENDPOINT && SHEET_ENDPOINT !== "YOUR_APPS_SCRIPT_URL_HERE") {
       fetch(SHEET_ENDPOINT, {
         method: "POST", mode: "no-cors",
@@ -442,11 +445,11 @@ export default function BoostLeadMagnet() {
           primaryColor: form.primaryColor, secondaryColor: form.secondaryColor,
           currentPlatform: form.currentPlatform, currentCrm: form.currentCrm,
           showChallenges: form.showChallenges, showLeaderboards: form.showLeaderboards,
+          previewUrl,
         }),
       }).catch(() => {});
     }
-    // Encode current form state into the URL hash so the preview is shareable
-    window.location.hash = encodePreviewHash(form);
+    window.location.hash = previewHash;
     setStep("preview");
     setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100);
   };

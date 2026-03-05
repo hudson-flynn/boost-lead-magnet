@@ -1,17 +1,17 @@
 import { useState, useRef } from "react";
 
-// ─── Sheet endpoint — paste your Apps Script Web App URL here ────────────────
+// ─── Sheet endpoint ───────────────────────────────────────────────────────────
 const SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbwOyjIFKC7OWmvm_qFojRcKEpVePXA_X6O1GEYcXVgWqFyclYlFTXrIEMgCIt9xmCh7/exec";
 
-// ─── Data (Fully Anonymized) ─────────────────────────────────────────────────
+// ─── Data ─────────────────────────────────────────────────────────────────────
 
 const GIVING_BUCKETS = [
-  { title: "Greatest Need", description: "By supporting the Area of Greatest Need, you are investing in the experience for our students. This fund provides flexible resources where they matter most.", image: null },
-  { title: "Financial Aid", description: "Help ensure that a quality education remains accessible to deserving students regardless of their family's financial circumstances.", image: null },
-  { title: "Athletics", description: "Support our athletic programs and help student-athletes develop teamwork, discipline, and leadership skills both on and off the field.", image: null },
-  { title: "Arts & Music", description: "Nurture creativity and self-expression through visual arts, theater, and music programs that enrich our students' educational experience.", image: null },
-  { title: "Faculty Development", description: "Invest in our exceptional teachers through professional development opportunities that enhance their skills and keep them at the forefront of education.", image: null },
-  { title: "Technology", description: "Ensure our students have access to cutting-edge technology and digital resources that prepare them for success in a rapidly changing world.", image: null },
+  { title: "Greatest Need", description: "By supporting the Area of Greatest Need, you are investing in the experience for our students. This fund provides flexible resources where they matter most.", image: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=600&q=80" },
+  { title: "Financial Aid", description: "Help ensure that a quality education remains accessible to deserving students regardless of their family's financial circumstances.", image: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&q=80" },
+  { title: "Athletics", description: "Support our athletic programs and help student-athletes develop teamwork, discipline, and leadership skills both on and off the field.", image: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&q=80" },
+  { title: "Arts & Music", description: "Nurture creativity and self-expression through visual arts, theater, and music programs that enrich our students' educational experience.", image: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=600&q=80" },
+  { title: "Faculty Development", description: "Invest in our exceptional teachers through professional development opportunities that enhance their skills and keep them at the forefront of education.", image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&q=80" },
+  { title: "Technology", description: "Ensure our students have access to cutting-edge technology and digital resources that prepare them for success in a rapidly changing world.", image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&q=80" },
 ];
 
 const FAQ_ITEMS = [
@@ -31,7 +31,6 @@ const MOCK_LEADERBOARD = [
   { affiliation: "Friend of School", donors: 12 },
 ];
 
-// Class year participation leaderboard
 const CLASS_PARTICIPATION = [
   { year: "2027", supported: 24, total: 57, pct: 42 },
   { year: "2031", supported: 2, total: 5, pct: 40 },
@@ -44,6 +43,7 @@ const CLASS_PARTICIPATION = [
 const ACTIVE_CHALLENGE = {
   title: "Family Participation Challenge",
   label: "FAMILIES",
+  image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=300&q=80",
   description: "Join other families in supporting what makes our school great! Every gift counts toward our participation goal, no matter the size.",
   hashtags: "#AllIn #SchoolPride",
   currentGifts: 289,
@@ -52,43 +52,55 @@ const ACTIVE_CHALLENGE = {
 };
 
 const COMPLETED_CHALLENGES = [
-  { title: "Alumni Giving Challenge", label: "ALUMNI", description: "A generous donor gave $500 because 100 alumni made a gift. Challenge complete!", amount: "$500", count: 100, labelText: "alumni gifts" },
-  { title: "Class Participation Challenge (Complete!)", label: "CLASS", description: "A $1,000 gift was unlocked when families reached 70% class participation!", thanks: "Thank you to our matching gift donors!", amount: "$1,000", count: 26, labelText: "family gifts" },
+  {
+    title: "Alumni Giving Challenge", label: "ALUMNI",
+    image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=300&q=80",
+    description: "A generous donor gave $500 because 100 alumni made a gift. Challenge complete!",
+    amount: "$500", count: 100, labelText: "alumni gifts"
+  },
+  {
+    title: "Class Participation Challenge (Complete!)", label: "CLASS",
+    image: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=300&q=80",
+    description: "A $1,000 gift was unlocked when families reached 70% class participation!",
+    thanks: "Thank you to our matching gift donors!", amount: "$1,000", count: 26, labelText: "family gifts"
+  },
 ];
 
 const MOCK_SUPPORTERS = [
-  { name: "The Martinez Family", affiliations: ["Current Parent", "Volunteer"], quote: "We're proud to support the teachers and staff who make such a difference in our children's lives every day." },
-  { name: "Sarah & David K.", affiliations: ["Alumni '98", "Current Parent"], quote: null },
-  { name: "The Thompson Family", affiliations: ["Current Parent"], quote: null },
-  { name: "Jennifer L.", affiliations: ["Past Parent", "Grandparent"], quote: "This school gave our children an incredible foundation. We're happy to give back." },
-  { name: "Michael & Lisa R.", affiliations: ["Current Parent", "Volunteer"], quote: null },
-  { name: "Anonymous", affiliations: ["Alumni '05"], quote: null },
-  { name: "The Patel Family", affiliations: ["Current Parent"], quote: "Grateful for the community and education our kids receive here." },
-  { name: "Robert & Ann W.", affiliations: ["Grandparent"], quote: "For our grandchildren and all the students who benefit from this wonderful school." },
-  { name: "Christine M.", affiliations: ["Faculty/Staff"], quote: "It's a privilege to work here. Thank you to all the families who make this possible." },
-  { name: "James & Emily H.", affiliations: ["Past Parent"], quote: null },
-  { name: "The Garcia Family", affiliations: ["Current Parent"], quote: null },
-  { name: "Anonymous", affiliations: ["Alumni '12"], quote: "This school changed my life. Happy to support the next generation." },
-  { name: "Linda S.", affiliations: ["Trustee"], quote: null },
-  { name: "The Williams Family", affiliations: ["Current Parent", "Alumni '95"], quote: "Two generations of our family have benefited from this school." },
-  { name: "Mark & Susan B.", affiliations: ["Past Parent"], quote: "Even though our kids have graduated, this community will always be part of our family." },
-  { name: "Anonymous", affiliations: ["Friend of School"], quote: null },
+  { name: "The Martinez Family", affiliations: ["Parent '31", "Parent '33"], type: "Current Parent", quote: "Our daughter came home last year and told us her teacher had stayed after school for two hours just to help her through one concept. That kind of dedication is what we're supporting." },
+  { name: "Sarah & David K.", affiliations: ["Alumni '98", "Parent '28"], type: "Current Parent", quote: null },
+  { name: "The Thompson Family", affiliations: ["Parent '30"], type: "Current Parent", quote: null },
+  { name: "Jennifer L.", affiliations: ["Past Parent '22", "Grandparent '33, '36"], type: "Past Parent", quote: "Three kids through this school. I've watched each of them become more confident, more curious, more kind. I don't know how much was this place and how much was just them — but I know this place had everything to do with it." },
+  { name: "Michael & Lisa R.", affiliations: ["Parent '29"], type: "Current Parent", quote: null },
+  { name: "Anonymous", affiliations: ["Alumni '05"], type: "Alumni", quote: null },
+  { name: "The Patel Family", affiliations: ["Parent '32"], type: "Current Parent", quote: "Our son talks about his teachers the way I used to talk about my best friends. That tells you everything you need to know about this place." },
+  { name: "Robert & Ann W.", affiliations: ["Grandparent '29, '32"], type: "Grandparent", quote: "Our grandchildren come home excited to tell us what they learned. At their age, we couldn't wait to leave school. Something special is happening here." },
+  { name: "Christine M.", affiliations: ["Faculty/Staff"], type: "Faculty/Staff", quote: "I have the best job in the world. I get to watch kids figure out who they are. The generosity of this community is what makes that possible." },
+  { name: "James & Emily H.", affiliations: ["Past Parent '20"], type: "Past Parent", quote: null },
+  { name: "The Garcia Family", affiliations: ["Parent '31", "Parent '34"], type: "Current Parent", quote: null },
+  { name: "Anonymous", affiliations: ["Alumni '12"], type: "Alumni", quote: "A teacher here saw something in me I didn't see in myself. I got into my dream school because of her. My gift is a very small thank-you for that." },
+  { name: "Linda S.", affiliations: ["Trustee"], type: "Trustee", quote: null },
+  { name: "The Williams Family", affiliations: ["Parent '27", "Alumni '95"], type: "Current Parent", quote: "Two generations of our family have come through this school. The values it instilled in us are ones we try to live by every day." },
+  { name: "Mark & Susan B.", affiliations: ["Past Parent '24"], type: "Past Parent", quote: "Our kids graduated last year and we still feel like part of this community. We always will." },
+  { name: "Anonymous", affiliations: ["Friend of School"], type: "Friend of School", quote: null },
 ];
 
+const SUPPORTER_FILTER_OPTIONS = ["Current Parent", "Past Parent", "Alumni", "Faculty/Staff", "Grandparent", "Trustee", "Friend of School"];
+
 const MOCK_COMMENTS = [
-  { name: "The Martinez Family", affiliation: "Current Parent", time: "a month ago", text: "Go Eagles! So proud to support our school community." },
-  { name: "Jennifer L.", affiliation: "Past Parent", time: "a month ago", text: "This school gave our children an incredible foundation. We're happy to give back." },
-  { name: "Christine M.", affiliation: "Faculty/Staff", time: "a month ago", text: "Thank you to all the families who make this school so special." },
-  { name: "Anonymous", affiliation: "Alumni '05", time: "2 months ago", text: "Honored to support the school that shaped who I am today." },
-  { name: "Robert & Ann W.", affiliation: "Grandparent", time: "2 months ago", text: "For our grandchildren and all the students who benefit from this wonderful school." },
-  { name: "The Patel Family", affiliation: "Current Parent", time: "2 months ago", text: "Grateful for this amazing community." },
-  { name: "Mark & Susan B.", affiliation: "Past Parent", time: "2 months ago", text: "Proud to support the next generation of leaders." },
-  { name: "Sarah & David K.", affiliation: "Alumni '98", time: "3 months ago", text: "This school has given our family so much. We are happy to give back." },
-  { name: "Anonymous", affiliation: "Alumni '12", time: "3 months ago", text: "The best investment we can make is in education. Thank you for everything." },
-  { name: "The Williams Family", affiliation: "Current Parent", time: "3 months ago", text: "Two generations strong and counting!" },
-  { name: "Linda S.", affiliation: "Trustee", time: "4 months ago", text: "It is an honor to serve this community." },
-  { name: "Anonymous", affiliation: "Friend of School", time: "4 months ago", text: "Supporting great education for all students." },
-  { name: "James & Emily H.", affiliation: "Past Parent", time: "4 months ago", text: "Even though our kids have graduated, this community will always be part of our family." },
+  { name: "The Martinez Family", affiliation: "Parent '31", time: "a month ago", text: "Our daughter came home and told us her teacher had stayed after school for two hours just to help her understand one concept. That's what we're supporting — teachers who show up like that." },
+  { name: "Jennifer L.", affiliation: "Past Parent '22", time: "a month ago", text: "Three kids through this school. I've watched each of them become more confident, more curious, more kind. I don't know how much was this place and how much was just them. But I know this place had everything to do with it." },
+  { name: "Christine M.", affiliation: "Faculty/Staff", time: "a month ago", text: "I've been teaching for 22 years. This is the only place I've worked where the parents and the school are genuinely on the same team. Your support means more to us than you know." },
+  { name: "Anonymous", affiliation: "Alumni '05", time: "2 months ago", text: "A teacher here told me I was a writer when I was pretty sure I was nothing. I've been a journalist for 12 years. I give back every year because of her." },
+  { name: "Robert & Ann W.", affiliation: "Grandparent '29, '32", time: "2 months ago", text: "Our grandson called just to tell us about a history project he's working on. He was so excited he could barely get the words out. This school is doing something right." },
+  { name: "The Patel Family", affiliation: "Parent '32", time: "2 months ago", text: "Our son talks about his teachers the way I used to talk about my best friends. That tells you everything." },
+  { name: "Mark & Susan B.", affiliation: "Past Parent '24", time: "2 months ago", text: "Our daughter graduated last year and still comes back to visit her teachers. She said, 'Mom, they actually care what happens to me.' That's not nothing. That's everything." },
+  { name: "Sarah & David K.", affiliation: "Alumni '98", time: "3 months ago", text: "I moved across the country and built a career I never expected. I think about the teachers who believed in me before I believed in myself, and I give back because someone needs to do that for the next kid." },
+  { name: "Anonymous", affiliation: "Alumni '12", time: "3 months ago", text: "A teacher here saw something in me I didn't see in myself. Got into my dream school because of her. My annual gift is a very small thank-you for that." },
+  { name: "The Williams Family", affiliation: "Parent '27", time: "3 months ago", text: "Both my husband and I are alumni. Watching our own kids walk these same halls has been one of the most meaningful things in our lives." },
+  { name: "Linda S.", affiliation: "Trustee", time: "4 months ago", text: "I've served on a lot of boards. I've never seen a school community that rallies together like this one. The culture of generosity here starts with the families." },
+  { name: "Anonymous", affiliation: "Friend of School", time: "4 months ago", text: "My best friend's kids go here and I've watched the school show up for their family through some genuinely hard times. That kind of community is worth supporting." },
+  { name: "James & Emily H.", affiliation: "Past Parent '20", time: "4 months ago", text: "Our kids have been out for a few years now and we're still giving. Some things you just don't walk away from." },
 ];
 
 const ABOUT_UPDATES = [
@@ -98,10 +110,10 @@ const ABOUT_UPDATES = [
 ];
 
 const RECENT_ACTIVITY = [
-  { name: "The Anderson Family", affiliations: ["Current Parent"], time: "Supported 2 days ago" },
+  { name: "The Anderson Family", affiliations: ["Parent '30"], time: "Supported 2 days ago" },
   { name: "Michelle T.", affiliations: ["Alumni '08", "Faculty/Staff"], time: "Supported 3 days ago" },
-  { name: "Anonymous", affiliations: ["Grandparent"], time: "Supported a week ago" },
-  { name: "The Chen Family", affiliations: ["Current Parent"], time: "Supported a week ago" },
+  { name: "Anonymous", affiliations: ["Grandparent '31, '34"], time: "Supported a week ago" },
+  { name: "The Chen Family", affiliations: ["Parent '29"], time: "Supported a week ago" },
   { name: "David R.", affiliations: ["Alumni '15"], time: "Supported 2 weeks ago" },
 ];
 
@@ -113,7 +125,7 @@ const DEFAULT_HERO_IMAGE = "https://images.unsplash.com/photo-1509062522246-3755
 const fmtD = (n) => "$" + n.toLocaleString();
 const fmtC = (n) => n.toLocaleString();
 
-// ─── Shared Components ───────────────────────────────────────────────────────
+// ─── Shared Components ────────────────────────────────────────────────────────
 
 const labelStyle = { display: "block", fontSize: "0.85em", fontWeight: 600, color: "#535353", marginBottom: "0.35rem" };
 const inputStyle = { width: "100%", padding: "0.6rem 0.75rem", border: "1px solid #e9e9e9", borderRadius: 4, fontSize: "0.95em", color: "#333", background: "#fff", outline: "none", boxSizing: "border-box", fontFamily: "'Open Sans', Arial, Helvetica, sans-serif" };
@@ -145,47 +157,16 @@ function ToggleSwitch({ label, checked, onChange, color }) {
   );
 }
 
-// Shield crest icon
 function CrestIcon({ color, size = 44, logoUrl }) {
   if (logoUrl) {
-    return (
-      <img
-        src={logoUrl}
-        alt="School logo"
-        style={{
-          width: size,
-          height: size,
-          objectFit: "contain",
-          flexShrink: 0
-        }}
-      />
-    );
+    return <img src={logoUrl} alt="School logo" style={{ width: size, height: size, objectFit: "contain", flexShrink: 0 }} />;
   }
   return (
-    <div style={{
-      width: size,
-      height: size,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      flexShrink: 0
-    }}>
+    <div style={{ width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
       <svg width={size * 0.9} height={size * 0.9} viewBox="0 0 40 48" fill="none">
-        <path
-          d="M20 2 L38 10 L38 28 C38 38 28 46 20 48 C12 46 2 38 2 28 L2 10 Z"
-          fill="white"
-          stroke={color}
-          strokeWidth="2"
-        />
-        <path
-          d="M20 6 L34 12 L34 27 C34 35 26 42 20 44 C14 42 6 35 6 27 L6 12 Z"
-          fill={color}
-        />
-        <path
-          d="M12 18 L28 34"
-          stroke="white"
-          strokeWidth="4"
-        />
+        <path d="M20 2 L38 10 L38 28 C38 38 28 46 20 48 C12 46 2 38 2 28 L2 10 Z" fill="white" stroke={color} strokeWidth="2" />
+        <path d="M20 6 L34 12 L34 27 C34 35 26 42 20 44 C14 42 6 35 6 27 L6 12 Z" fill={color} />
+        <path d="M12 18 L28 34" stroke="white" strokeWidth="4" />
         <circle cx="14" cy="20" r="2" fill="white" />
         <circle cx="26" cy="32" r="2" fill="white" />
       </svg>
@@ -193,47 +174,33 @@ function CrestIcon({ color, size = 44, logoUrl }) {
   );
 }
 
-// Quote icon SVG
 function QuoteIcon({ color, size = 24 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={color} style={{ flexShrink: 0 }}>
-      <path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"/>
+      <path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z" />
     </svg>
   );
 }
 
-// Challenge card image with label
-function ChallengeImage({ label, color, logoUrl }) {
+// Challenge thumbnail: stock photo + label overlay
+function ChallengeImage({ label, image }) {
   return (
-    <div style={{
-      width: 100,
-      height: 100,
-      background: "#fff",
-      border: "1px solid #e0e0e0",
-      borderRadius: 4,
-      flexShrink: 0,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "8px"
-    }}>
+    <div style={{ width: 110, height: 110, borderRadius: 4, flexShrink: 0, overflow: "hidden", border: "1px solid #e0e0e0", position: "relative" }}>
+      <img src={image} alt={label} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
       <div style={{
-        background: "#fff",
-        color: color,
-        fontSize: "0.7rem",
-        fontWeight: 700,
-        letterSpacing: "0.03em",
-        marginBottom: "4px"
+        position: "absolute", bottom: 0, left: 0, right: 0,
+        background: "rgba(0,0,0,.5)",
+        color: "#fff", fontSize: "0.65rem", fontWeight: 700,
+        letterSpacing: "0.06em", textAlign: "center",
+        padding: "3px 4px"
       }}>
         {label}
       </div>
-      <CrestIcon color={color} size={56} logoUrl={logoUrl} />
     </div>
   );
 }
 
-// Progress bar with arrow - arrow protrudes into gray track at fill endpoint
+// Progress bar WITH arrow (hero + challenge cards only)
 function ProgressBarWithArrow({ pct, color, height = 24 }) {
   const cappedPct = Math.min(pct, 100);
   const fillWidth = Math.max(cappedPct, 3);
@@ -242,30 +209,25 @@ function ProgressBarWithArrow({ pct, color, height = 24 }) {
   return (
     <div style={{ position: "relative", height }}>
       {/* Gray track */}
-      <div style={{
-        position: "absolute", inset: 0,
-        background: "#e0e0e0",
-        borderRadius: 4,
-      }} />
-      {/* Filled portion */}
+      <div style={{ position: "absolute", inset: 0, background: "#e0e0e0", borderRadius: 4 }} />
+      {/* Fill — extends 1px past arrow base to eliminate subpixel gap */}
       <div style={{
         position: "absolute", top: 0, left: 0, bottom: 0,
-        width: `${fillWidth}%`,
+        width: `calc(${fillWidth}% + 1px)`,
         background: color,
         borderRadius: fillWidth >= 99 ? 4 : "4px 0 0 4px",
         display: "flex", alignItems: "center", justifyContent: "flex-end",
-        paddingRight: arrowW + 6,
+        paddingRight: arrowW + 8,
         boxSizing: "border-box",
-        minWidth: arrowW + 28,
+        minWidth: arrowW + 32,
       }}>
         <span style={{ color: "#fff", fontSize: height > 20 ? "0.8rem" : "0.72rem", fontWeight: 700 }}>
           {pct}%
         </span>
       </div>
-      {/* Arrow — left base at fill end, tip protrudes into gray track */}
+      {/* Arrow tip at fill endpoint, protrudes into gray track */}
       <div style={{
-        position: "absolute",
-        top: 0,
+        position: "absolute", top: 0,
         left: `${fillWidth}%`,
         width: 0, height: 0,
         borderTop: `${height / 2}px solid transparent`,
@@ -273,6 +235,23 @@ function ProgressBarWithArrow({ pct, color, height = 24 }) {
         borderLeft: `${arrowW}px solid ${color}`,
         zIndex: 2,
       }} />
+    </div>
+  );
+}
+
+// Plain progress bar — no arrow (class participation leaderboard)
+function ProgressBarPlain({ pct, color, height = 26 }) {
+  const fillWidth = Math.max(Math.min(pct, 100), 3);
+  return (
+    <div style={{ background: "#e0e0e0", borderRadius: 4, height, overflow: "hidden" }}>
+      <div style={{
+        background: color, height: "100%", width: fillWidth + "%",
+        borderRadius: 4,
+        display: "flex", alignItems: "center", justifyContent: "flex-end",
+        paddingRight: 10, boxSizing: "border-box", minWidth: 36,
+      }}>
+        <span style={{ color: "#fff", fontSize: "0.78rem", fontWeight: 700 }}>{pct}%</span>
+      </div>
     </div>
   );
 }
@@ -302,22 +281,49 @@ function RecentActivitySidebar({ pc }) {
   );
 }
 
-// Button with hover effect
-function HoverButton({ children, style, hoverBg, ...props }) {
-  const [isHovered, setIsHovered] = useState(false);
-  const baseStyle = { ...style };
-  if (isHovered && hoverBg) {
-    baseStyle.background = hoverBg;
-  }
+// Give CTA Modal
+function GiveModal({ sn, sc, pc, onClose }) {
   return (
-    <button
-      {...props}
-      style={baseStyle}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {children}
-    </button>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }} onClick={onClose}>
+      <div style={{ background: "#fff", borderRadius: 8, padding: "2.5rem 2rem", maxWidth: 460, width: "100%", textAlign: "center", position: "relative", boxShadow: "0 8px 32px rgba(0,0,0,.2)" }} onClick={(e) => e.stopPropagation()}>
+        <button onClick={onClose} style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", fontSize: "1.3rem", color: "#aaa", cursor: "pointer", lineHeight: 1 }}>✕</button>
+        <div style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>🎓</div>
+        <h2 style={{ fontSize: "1.35rem", fontWeight: 700, color: "#333", margin: "0 0 0.75rem", lineHeight: 1.3 }}>
+          Want to see what making a gift looks like?
+        </h2>
+        <p style={{ fontSize: "0.95rem", color: "#666", lineHeight: 1.7, margin: "0 0 1.75rem" }}>
+          On a real Boost page, donors can give by card, ACH bank transfer, or pledge over time — with a receipt in seconds. Book a demo to see the full experience for {sn}.
+        </p>
+        <a
+          href="https://www.boostmyschool.com/demo"
+          target="_blank"
+          rel="noreferrer"
+          style={{ display: "inline-block", padding: "0.9rem 2.5rem", background: sc, color: "#fff", borderRadius: 4, fontSize: "0.95rem", fontWeight: 700, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}
+        >
+          Book a Demo
+        </a>
+        <div style={{ marginTop: "1rem", fontSize: "0.8rem", color: "#aaa" }}>Takes about 20 minutes</div>
+      </div>
+    </div>
+  );
+}
+
+// Logo card — used in hero and footer
+function LogoCard({ logoPreview, fn, sn, pc }) {
+  return (
+    <div style={{ background: "#fff", borderRadius: 4, padding: "0.75rem 1.25rem", display: "flex", alignItems: "center", gap: "0.75rem", boxShadow: "0 2px 8px rgba(0,0,0,.15)" }}>
+      {logoPreview ? (
+        <img src={logoPreview} alt={sn} style={{ height: 50, maxWidth: 180, objectFit: "contain" }} />
+      ) : (
+        <>
+          <CrestIcon color={pc} size={36} />
+          <div>
+            <div style={{ fontSize: "1.1rem", fontWeight: 700, color: pc, lineHeight: 1.2 }}>{fn}</div>
+            <div style={{ fontSize: "0.7rem", color: "#666", letterSpacing: "0.05em" }}>{sn.toUpperCase()}</div>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -330,6 +336,8 @@ export default function BoostLeadMagnet() {
   const [activeTab, setActiveTab] = useState("about");
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
+  const [showGiveModal, setShowGiveModal] = useState(false);
+  const [supporterFilter, setSupporterFilter] = useState("");
   const [form, setForm] = useState({
     schoolName: "", fundName: "", fundraisingGoal: "", supporterGoal: "",
     primaryColor: "#1b603a", secondaryColor: "#76bd22", logo: null,
@@ -338,36 +346,29 @@ export default function BoostLeadMagnet() {
   });
   const previewRef = useRef(null);
   const updateForm = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
+
   const handleLogoUpload = (e) => {
     const file = e.target.files[0];
     if (file) { updateForm("logo", file); const r = new FileReader(); r.onload = (ev) => setLogoPreview(ev.target.result); r.readAsDataURL(file); }
   };
+
   const canSubmit = form.schoolName.trim() && form.fundName.trim() && form.fundraisingGoal && form.supporterGoal && form.email.trim();
+
   const handleSubmit = () => {
     if (!canSubmit) return;
-
-    // Fire-and-forget — don't block the preview on network latency
     if (SHEET_ENDPOINT && SHEET_ENDPOINT !== "YOUR_APPS_SCRIPT_URL_HERE") {
       fetch(SHEET_ENDPOINT, {
-        method: "POST",
-        mode: "no-cors",
+        method: "POST", mode: "no-cors",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          schoolName:      form.schoolName,
-          fundName:        form.fundName,
-          email:           form.email,
-          fundraisingGoal: form.fundraisingGoal,
-          supporterGoal:   form.supporterGoal,
-          primaryColor:    form.primaryColor,
-          secondaryColor:  form.secondaryColor,
-          currentPlatform: form.currentPlatform,
-          currentCrm:      form.currentCrm,
-          showChallenges:  form.showChallenges,
-          showLeaderboards: form.showLeaderboards,
+          schoolName: form.schoolName, fundName: form.fundName, email: form.email,
+          fundraisingGoal: form.fundraisingGoal, supporterGoal: form.supporterGoal,
+          primaryColor: form.primaryColor, secondaryColor: form.secondaryColor,
+          currentPlatform: form.currentPlatform, currentCrm: form.currentCrm,
+          showChallenges: form.showChallenges, showLeaderboards: form.showLeaderboards,
         }),
-      }).catch(() => {}); // silently ignore network errors
+      }).catch(() => {});
     }
-
     setStep("preview");
     setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100);
   };
@@ -390,8 +391,11 @@ export default function BoostLeadMagnet() {
     const b = Math.max(0, (num & 0x0000FF) - amount);
     return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
   };
-
   const scHover = darkenColor(sc, 30);
+
+  const filteredSupporters = supporterFilter
+    ? MOCK_SUPPORTERS.filter((s) => s.type === supporterFilter)
+    : MOCK_SUPPORTERS;
 
   const TABS = [
     { key: "about", label: "About", count: ABOUT_UPDATES.length },
@@ -407,31 +411,16 @@ export default function BoostLeadMagnet() {
     const [hovered, setHovered] = useState(false);
     return (
       <button
-        style={{
-          width: "100%",
-          padding: "1rem 1.5rem",
-          background: hovered ? scHover : sc,
-          color: "#fff",
-          border: "none",
-          fontWeight: 700,
-          fontSize: "0.9rem",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          cursor: "pointer",
-          borderRadius: 4,
-          fontFamily: "'Open Sans', Arial, Helvetica, sans-serif",
-          transition: "background 0.2s",
-          ...s
-        }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        onClick={() => setShowGiveModal(true)}
+        style={{ width: "100%", padding: "1rem 1.5rem", background: hovered ? scHover : sc, color: "#fff", border: "none", fontWeight: 700, fontSize: "0.9rem", textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", borderRadius: 4, fontFamily: "'Open Sans', Arial, Helvetica, sans-serif", transition: "background 0.2s", ...s }}
+        onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
       >
         Give (or Pledge) Today
       </button>
     );
   };
 
-  // ═══ FORM VIEW ═════════════════════════════════════════════════════════════
+  // ═══ FORM VIEW ═══════════════════════════════════════════════════════════════
   if (step === "form") {
     return (
       <div style={{ fontFamily: "'Open Sans', Arial, Helvetica, sans-serif", minHeight: "100vh", background: "#f5f5f5", display: "flex", flexDirection: "column", alignItems: "center", padding: "2rem 1rem" }}>
@@ -485,7 +474,9 @@ export default function BoostLeadMagnet() {
             <FormField label="Current Fundraising Platform" type="select" options={PLATFORM_OPTIONS} value={form.currentPlatform} onChange={(v) => updateForm("currentPlatform", v)} placeholder="Select your current platform" />
             <FormField label="Current CRM" type="select" options={CRM_OPTIONS} value={form.currentCrm} onChange={(v) => updateForm("currentCrm", v)} placeholder="Select your current CRM" />
             <FormField label="Email Address" required type="email" value={form.email} onChange={(v) => updateForm("email", v)} placeholder="you@yourschool.org" />
-            <button onClick={handleSubmit} disabled={!canSubmit} style={{ width: "100%", padding: "0.9rem", background: canSubmit ? sc : "#c9c9c9", color: "#fff", border: "none", borderRadius: 4, fontSize: "1em", fontWeight: 700, cursor: canSubmit ? "pointer" : "not-allowed", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "0.5rem" }}>Generate My Page Preview</button>
+            <button onClick={handleSubmit} disabled={!canSubmit} style={{ width: "100%", padding: "0.9rem", background: canSubmit ? sc : "#c9c9c9", color: "#fff", border: "none", borderRadius: 4, fontSize: "1em", fontWeight: 700, cursor: canSubmit ? "pointer" : "not-allowed", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "0.5rem" }}>
+              Generate My Page Preview
+            </button>
           </div>
         </div>
         <p style={{ color: "#949494", fontSize: "0.78em", marginTop: "1.5rem" }}>Powered by Boost My School</p>
@@ -493,38 +484,24 @@ export default function BoostLeadMagnet() {
     );
   }
 
-  // Giving bucket button with hover
   const GiveBucketButton = () => {
     const [hovered, setHovered] = useState(false);
     return (
       <button
-        style={{
-          width: "100%",
-          padding: "0.6rem",
-          border: "2px solid " + sc,
-          background: hovered ? sc : "#fff",
-          color: hovered ? "#fff" : sc,
-          fontWeight: 700,
-          fontSize: "0.8rem",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          borderRadius: 4,
-          cursor: "pointer",
-          fontFamily: "inherit",
-          marginBottom: "0.85rem",
-          transition: "all 0.2s"
-        }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        onClick={() => setShowGiveModal(true)}
+        style={{ width: "100%", padding: "0.6rem", border: "2px solid " + sc, background: hovered ? sc : "#fff", color: hovered ? "#fff" : sc, fontWeight: 700, fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.05em", borderRadius: 4, cursor: "pointer", fontFamily: "inherit", marginBottom: "0.85rem", transition: "all 0.2s" }}
+        onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
       >
         Give Now
       </button>
     );
   };
 
-  // ═══ PREVIEW VIEW ══════════════════════════════════════════════════════════
+  // ═══ PREVIEW VIEW ════════════════════════════════════════════════════════════
   return (
     <div ref={previewRef} style={{ fontFamily: "'Open Sans', Arial, Helvetica, sans-serif", fontSize: 16, lineHeight: 1.625, color: "#535353", background: "#fff", minHeight: "100vh" }}>
+
+      {showGiveModal && <GiveModal sn={sn} sc={sc} pc={pc} onClose={() => setShowGiveModal(false)} />}
 
       {/* Sticky Demo Bar */}
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000, background: "#fff", borderBottom: "2px solid " + sc, padding: "0.5rem 1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 8px rgba(0,0,0,.08)" }}>
@@ -535,95 +512,46 @@ export default function BoostLeadMagnet() {
         </div>
       </div>
 
-      {/* ── HERO - Full image with semi-transparent overlay ── */}
-      <div style={{ marginTop: 48, position: "relative", minHeight: 580 }}>
-        {/* Background image — full height */}
-        <div style={{
-          position: "absolute", inset: 0,
-          backgroundImage: `url(${DEFAULT_HERO_IMAGE})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center top",
-        }} />
+      {/* ── HERO: full viewport height, image behind, overlay on bottom 50% ── */}
+      <div style={{ marginTop: 48, position: "relative", height: "calc(100vh - 48px)", overflow: "hidden" }}>
+        {/* Full-bleed background image */}
+        <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${DEFAULT_HERO_IMAGE})`, backgroundSize: "cover", backgroundPosition: "center top" }} />
 
-        {/* Logo box + hamburger — top of image */}
-        <div style={{
-          position: "absolute", top: "1.5rem", left: 0, right: 0,
-          display: "flex", justifyContent: "space-between", alignItems: "flex-start",
-          padding: "0 2rem",
-          zIndex: 10,
-        }}>
-          <div style={{
-            background: "#fff", borderRadius: 4,
-            padding: "0.75rem 1.25rem",
-            display: "flex", alignItems: "center", gap: "0.75rem",
-            boxShadow: "0 2px 8px rgba(0,0,0,.2)",
-          }}>
-            {logoPreview ? (
-              <img src={logoPreview} alt={sn} style={{ height: 50, maxWidth: 180, objectFit: "contain" }} />
-            ) : (
-              <>
-                <CrestIcon color={pc} size={36} />
-                <div>
-                  <div style={{ fontSize: "1.1rem", fontWeight: 700, color: pc, lineHeight: 1.2 }}>{fn}</div>
-                  <div style={{ fontSize: "0.7rem", color: "#666", letterSpacing: "0.05em" }}>{sn.toUpperCase()}</div>
-                </div>
-              </>
-            )}
-          </div>
-          <div style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: "5px", padding: "0.5rem" }}>
-            <div style={{ width: 28, height: 3, background: "#fff", borderRadius: 2 }} />
-            <div style={{ width: 28, height: 3, background: "#fff", borderRadius: 2 }} />
-            <div style={{ width: 28, height: 3, background: "#fff", borderRadius: 2 }} />
+        {/* Logo + hamburger over the image */}
+        <div style={{ position: "absolute", top: "1.5rem", left: 0, right: 0, display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "0 2rem", zIndex: 10 }}>
+          <LogoCard logoPreview={logoPreview} fn={fn} sn={sn} pc={pc} />
+          <div style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: "5px", padding: "0.6rem", background: "rgba(0,0,0,.25)", borderRadius: 4 }}>
+            <div style={{ width: 26, height: 3, background: "#fff", borderRadius: 2 }} />
+            <div style={{ width: 26, height: 3, background: "#fff", borderRadius: 2 }} />
+            <div style={{ width: 26, height: 3, background: "#fff", borderRadius: 2 }} />
           </div>
         </div>
 
-        {/* Semi-transparent primary color overlay — bottom content area */}
-        <div style={{
-          position: "absolute", bottom: 0, left: 0, right: 0,
-          background: pc + "ee",
-          borderTop: `4px solid ${sc}`,
-        }}>
-          <div style={{ maxWidth: 1100, margin: "0 auto", padding: "2.5rem 2rem 3rem", display: "flex", gap: "2.5rem", alignItems: "flex-start" }}>
+        {/* Primary color overlay — bottom 50% */}
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "50%", background: pc + "ee", borderTop: `4px solid ${sc}` }}>
+          <div style={{ maxWidth: 1100, margin: "0 auto", padding: "2.25rem 2rem 2.5rem", display: "flex", gap: "2.5rem", alignItems: "flex-start", height: "100%", boxSizing: "border-box" }}>
             <div style={{ flex: 1 }}>
-              <h1 style={{ fontSize: "2.25rem", fontWeight: 700, color: "#fff", margin: "0 0 1.25rem", lineHeight: 1.2 }}>{fn}</h1>
-              <p style={{ fontSize: "1rem", color: "rgba(255,255,255,.95)", lineHeight: 1.8, margin: "0 0 1.75rem", maxWidth: 580 }}>
-                When you make a gift to {sn}, you invest in our students and faculty. The {fn} is essential to our school, supporting current-year operating expenses not covered by tuition. We rely on our school community to contribute meaningfully to ensure we can provide an outstanding education for every student so that they may develop the skills to successfully navigate the future with confidence.
+              <h1 style={{ fontSize: "2.1rem", fontWeight: 700, color: "#fff", margin: "0 0 1rem", lineHeight: 1.2 }}>{fn}</h1>
+              <p style={{ fontSize: "0.95rem", color: "rgba(255,255,255,.93)", lineHeight: 1.75, margin: "0 0 1.25rem", maxWidth: 560 }}>
+                When you make a gift to {sn}, you invest in our students and faculty. The {fn} is essential to our school, supporting current-year operating expenses not covered by tuition.
               </p>
-              <div style={{ marginBottom: "1.25rem", maxWidth: 560 }}>
+              <div style={{ marginBottom: "1rem", maxWidth: 540 }}>
                 <ProgressBarWithArrow pct={pctFunded} color={sc} height={28} />
               </div>
               <div style={{ display: "flex", gap: "3rem", alignItems: "baseline" }}>
                 <div>
-                  <span style={{ fontSize: "2rem", fontWeight: 700, color: "#fff" }}>{fmtD(amtRaised)}</span>
+                  <span style={{ fontSize: "1.9rem", fontWeight: 700, color: "#fff" }}>{fmtD(amtRaised)}</span>
                   <div style={{ color: "rgba(255,255,255,.75)", fontSize: "0.88rem" }}>raised of {fmtD(goalNum)} goal</div>
                 </div>
                 <div>
-                  <span style={{ fontSize: "2rem", fontWeight: 700, color: "#fff" }}>{fmtC(suppCount)}</span>
+                  <span style={{ fontSize: "1.9rem", fontWeight: 700, color: "#fff" }}>{fmtC(suppCount)}</span>
                   <div style={{ color: "rgba(255,255,255,.75)", fontSize: "0.88rem", textDecoration: "underline", cursor: "pointer" }} onClick={() => setActiveTab("supporters")}>supporters</div>
                 </div>
               </div>
             </div>
-
-            {/* Right: challenge banner + CTA */}
-            <div style={{ flex: "0 0 300px", paddingTop: "0.5rem" }}>
+            <div style={{ flex: "0 0 280px", paddingTop: "0.25rem" }}>
               {form.showChallenges && (
-                <div
-                  onClick={() => setActiveTab("challenges")}
-                  style={{
-                    background: "#fff",
-                    border: `1px solid ${sc}`,
-                    borderRadius: 4,
-                    padding: "0.75rem 1rem",
-                    marginBottom: "1rem",
-                    fontSize: "0.9rem",
-                    color: "#333",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                  }}
-                >
+                <div onClick={() => setActiveTab("challenges")} style={{ background: "#fff", border: `1px solid ${sc}`, borderRadius: 4, padding: "0.7rem 1rem", marginBottom: "1rem", fontSize: "0.88rem", color: "#333", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem" }}>
                   <span style={{ color: sc }}>⚡</span> There is 1 active challenge!
                 </div>
               )}
@@ -631,9 +559,6 @@ export default function BoostLeadMagnet() {
             </div>
           </div>
         </div>
-
-        {/* Spacer so the relative container is tall enough */}
-        <div style={{ height: 580 }} />
       </div>
 
       {/* ── GIVING BUCKETS ── */}
@@ -641,12 +566,8 @@ export default function BoostLeadMagnet() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.25rem" }}>
           {GIVING_BUCKETS.map((b, i) => (
             <div key={i} style={{ background: "#fff", borderRadius: 4, boxShadow: "0 1px 4px rgba(0,0,0,.08)", overflow: "hidden", display: "flex", flexDirection: "column", border: "1px solid #f0f0f0" }}>
-              <div style={{ height: 180, overflow: "hidden", background: pc + "22", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {b.image ? (
-                  <img src={b.image} alt={b.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                ) : (
-                  <CrestIcon color={pc} size={80} />
-                )}
+              <div style={{ height: 200, overflow: "hidden" }}>
+                <img src={b.image} alt={b.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
               </div>
               <div style={{ padding: "1.25rem 1rem 1.5rem", textAlign: "center", display: "flex", flexDirection: "column", flex: 1 }}>
                 <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#333", margin: "0 0 1rem" }}>{b.title}</h3>
@@ -660,45 +581,12 @@ export default function BoostLeadMagnet() {
 
       {/* ── TAB NAVIGATION ── */}
       <div style={{ background: pc, marginTop: "1rem" }}>
-        <div style={{
-          maxWidth: 1100,
-          margin: "0 auto",
-          padding: "0 1.5rem",
-          display: "flex",
-          justifyContent: "center",
-          gap: "0.25rem",
-          flexWrap: "wrap"
-        }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 1.5rem", display: "flex", justifyContent: "center", gap: "0.25rem", flexWrap: "wrap" }}>
           {TABS.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setActiveTab(t.key)}
-              style={{
-                padding: "0.9rem 1rem",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "0.9rem",
-                fontWeight: 600,
-                fontFamily: "inherit",
-                color: "#fff",
-                borderBottom: activeTab === t.key ? "3px solid rgba(255,255,255,.85)" : "3px solid transparent",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                transition: "border-color 0.2s"
-              }}
-            >
+            <button key={t.key} onClick={() => setActiveTab(t.key)} style={{ padding: "0.9rem 1rem", background: "transparent", border: "none", cursor: "pointer", fontSize: "0.9rem", fontWeight: 600, fontFamily: "inherit", color: "#fff", borderBottom: activeTab === t.key ? "3px solid rgba(255,255,255,.85)" : "3px solid transparent", display: "flex", alignItems: "center", gap: "0.5rem", transition: "border-color 0.2s" }}>
               {t.label}
-              <span style={{
-                background: "#fff",
-                color: pc,
-                fontSize: "0.7rem",
-                padding: "0.15rem 0.5rem",
-                borderRadius: 3,
-                fontWeight: 700
-              }}>
-                {typeof t.count === 'number' && t.count > 99 ? fmtC(t.count) : t.count}
+              <span style={{ background: "#fff", color: pc, fontSize: "0.7rem", padding: "0.15rem 0.5rem", borderRadius: 3, fontWeight: 700 }}>
+                {typeof t.count === "number" && t.count > 99 ? fmtC(t.count) : t.count}
               </span>
             </button>
           ))}
@@ -709,23 +597,21 @@ export default function BoostLeadMagnet() {
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem 1.5rem", display: "flex", gap: "3rem" }}>
         <div style={{ flex: 1, minWidth: 0 }}>
 
-          {/* ── ABOUT TAB ── */}
+          {/* ── ABOUT ── */}
           {activeTab === "about" && (
             <div>
               {form.showChallenges && (
                 <ChallengeCardShell title="Active challenge" pc={pc}>
                   <div style={{ padding: "1.25rem", display: "flex", gap: "1.25rem", alignItems: "flex-start" }}>
-                    <ChallengeImage label={ACTIVE_CHALLENGE.label} color={pc} logoUrl={logoPreview} />
+                    <ChallengeImage label={ACTIVE_CHALLENGE.label} image={ACTIVE_CHALLENGE.image} />
                     <div style={{ flex: 1 }}>
                       <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "#333", margin: "0 0 0.5rem" }}>{ACTIVE_CHALLENGE.title}</h4>
                       <p style={{ fontSize: "0.9rem", color: "#555", margin: "0 0 0.75rem", lineHeight: 1.6 }}>{ACTIVE_CHALLENGE.description}</p>
-                      <p style={{ fontSize: "0.88rem", color: pc, margin: 0, fontWeight: 500 }}>{ACTIVE_CHALLENGE.hashtags}</p>
+                      <p style={{ fontSize: "0.88rem", color: sc, margin: 0, fontWeight: 500 }}>{ACTIVE_CHALLENGE.hashtags}</p>
                     </div>
                   </div>
                   <div style={{ padding: "0 1.25rem 1rem" }}>
-                    <span onClick={() => setActiveTab("challenges")} style={{ color: pc, fontSize: "0.9rem", fontWeight: 500, cursor: "pointer", textDecoration: "underline" }}>
-                      View progress towards challenges
-                    </span>
+                    <span onClick={() => setActiveTab("challenges")} style={{ color: sc, fontSize: "0.9rem", fontWeight: 500, cursor: "pointer", textDecoration: "underline" }}>View progress towards challenges</span>
                   </div>
                 </ChallengeCardShell>
               )}
@@ -734,66 +620,49 @@ export default function BoostLeadMagnet() {
                 <ChallengeCardShell title="Leaderboards" pc={pc}>
                   <div style={{ padding: "1.25rem" }}>
                     <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "#333", margin: "0 0 1rem" }}>{sn} Community Leaderboard</h4>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.5rem 0", marginBottom: "0.5rem" }}>
-                      <span style={{ color: pc, fontWeight: 600, fontSize: "0.88rem", minWidth: 130, textDecoration: "underline", cursor: "pointer" }}>Affiliation</span>
-                      <span style={{ color: pc, fontWeight: 600, fontSize: "0.88rem", textDecoration: "underline", cursor: "pointer" }}># Donors ↓</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.5rem 0", borderBottom: "1px solid #e9e9e9", marginBottom: "0" }}>
+                      <span style={{ color: sc, fontWeight: 600, fontSize: "0.88rem", minWidth: 130, textDecoration: "underline", cursor: "pointer" }}>Affiliation</span>
+                      <span style={{ color: sc, fontWeight: 600, fontSize: "0.88rem", textDecoration: "underline", cursor: "pointer" }}># Donors ↓</span>
                     </div>
-
                     {MOCK_LEADERBOARD.slice(0, 2).map((r, i) => (
                       <div key={i} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.75rem 0", borderBottom: "1px solid #e9e9e9" }}>
                         <span style={{ color: sc, fontWeight: 500, fontSize: "0.9rem", minWidth: 130, cursor: "pointer", textDecoration: "underline" }}>{r.affiliation}</span>
                         <div style={{ flex: 1 }}>
-                          <div style={{
-                            background: pc,
-                            borderRadius: 4,
-                            height: 28,
-                            width: Math.round((r.donors / maxLB) * 100) + "%",
-                            minWidth: 40,
-                            display: "flex", alignItems: "center", justifyContent: "flex-end",
-                            paddingRight: 8, boxSizing: "border-box",
-                          }}>
+                          <div style={{ background: pc, borderRadius: 4, height: 28, width: Math.round((r.donors / maxLB) * 100) + "%", minWidth: 40, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 8, boxSizing: "border-box" }}>
                             <span style={{ color: "#fff", fontSize: "0.82rem", fontWeight: 700 }}>{r.donors}</span>
                           </div>
                         </div>
                       </div>
                     ))}
-
                     <div style={{ marginTop: "0.75rem" }}>
-                      <span onClick={() => setActiveTab("leaderboards")} style={{ color: pc, fontSize: "0.9rem", fontWeight: 500, cursor: "pointer", textDecoration: "underline" }}>
-                        Show more
-                      </span>
+                      <span onClick={() => setActiveTab("leaderboards")} style={{ color: sc, fontSize: "0.9rem", fontWeight: 500, cursor: "pointer", textDecoration: "underline" }}>Show more</span>
                     </div>
                   </div>
                 </ChallengeCardShell>
               )}
 
               <div style={{ marginTop: "1.5rem" }}>
-                <p style={{ fontSize: "0.95rem", lineHeight: 1.8, color: "#555" }}>
-                  Thank you for supporting the {fn}! Your generosity helps provide exceptional educational experiences for our students.
-                </p>
-                <p style={{ fontSize: "0.9rem", lineHeight: 1.8, color: "#777", fontStyle: "italic", marginTop: "1rem" }}>
-                  The fiscal year runs from July 1 through June 30. Gifts can be made by credit card, ACH, or check. For stock transfers or planned giving, please contact the advancement office.
-                </p>
+                <p style={{ fontSize: "0.95rem", lineHeight: 1.8, color: "#555" }}>Thank you for supporting the {fn}! Your generosity helps provide exceptional educational experiences for our students.</p>
+                <p style={{ fontSize: "0.9rem", lineHeight: 1.8, color: "#777", fontStyle: "italic", marginTop: "1rem" }}>The fiscal year runs from July 1 through June 30. Gifts can be made by credit card, ACH, or check. For stock transfers or planned giving, please contact the advancement office.</p>
                 <p style={{ fontSize: "0.95rem", fontWeight: 700, color: "#333", marginTop: "1rem" }}>Thank you for your support!</p>
               </div>
-
               <div style={{ marginTop: "2rem" }}>
                 {ABOUT_UPDATES.map((u, i) => (
-                  <div key={i} style={{ padding: "1.25rem 0", borderTop: "1px solid #e9e9e9" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "0.25rem" }}>
-                      <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "#333", margin: 0 }}>{u.title}</h4>
-                      <span style={{ fontSize: "0.8rem", color: "#999" }}>{u.timeAgo}</span>
+                  <div key={i} style={{ borderRadius: 4, overflow: "hidden", border: "1px solid #e9e9e9", marginBottom: "1rem" }}>
+                    <div style={{ background: pc, color: "#fff", padding: "0.65rem 1rem", fontWeight: 700, fontSize: "0.88rem", display: "flex", justifyContent: "space-between" }}>
+                      <span>{u.title}</span><span style={{ fontWeight: 400, opacity: 0.8 }}>{u.timeAgo}</span>
                     </div>
-                    <div style={{ fontSize: "0.8rem", color: "#999", marginBottom: "0.5rem" }}>{u.date}</div>
-                    <p style={{ fontSize: "0.9rem", color: "#555", margin: 0, lineHeight: 1.7 }}>{u.text}</p>
+                    <div style={{ padding: "1rem", background: "#fff" }}>
+                      <div style={{ fontSize: "0.78rem", color: "#999", marginBottom: "0.5rem" }}>{u.date}</div>
+                      <p style={{ fontSize: "0.9rem", color: "#555", margin: 0, lineHeight: 1.7 }}>{u.text}</p>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* ── FAQ TAB ── */}
+          {/* ── FAQ ── */}
           {activeTab === "faq" && (
             <div>
               <h2 style={{ fontSize: "1.35rem", fontWeight: 700, color: "#333", margin: "0 0 1.25rem" }}>Frequently Asked Questions</h2>
@@ -809,41 +678,23 @@ export default function BoostLeadMagnet() {
             </div>
           )}
 
-          {/* ── CHALLENGES TAB ── */}
+          {/* ── CHALLENGES ── */}
           {activeTab === "challenges" && form.showChallenges && (
             <div>
               <div style={{ marginBottom: "2rem" }}>
                 <p style={{ fontSize: "1.1rem", fontWeight: 600, color: "#333", margin: "0 0 1rem" }}>Want to challenge other members of the community?</p>
-                <HoverButton
-                  style={{
-                    padding: "0.75rem 2rem",
-                    border: "2px solid " + sc,
-                    background: "#fff",
-                    color: sc,
-                    fontWeight: 700,
-                    fontSize: "0.85rem",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.04em",
-                    borderRadius: 4,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                    transition: "all 0.2s"
-                  }}
-                  hoverBg={sc}
-                  onMouseEnter={(e) => { e.target.style.background = sc; e.target.style.color = "#fff"; }}
-                  onMouseLeave={(e) => { e.target.style.background = "#fff"; e.target.style.color = sc; }}
-                >
+                <button onClick={() => setShowGiveModal(true)} style={{ padding: "0.75rem 2rem", border: "2px solid " + sc, background: "#fff", color: sc, fontWeight: 700, fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.04em", borderRadius: 4, cursor: "pointer", fontFamily: "inherit" }}>
                   Create Your Challenge Gift
-                </HoverButton>
+                </button>
               </div>
 
               <ChallengeCardShell title={ACTIVE_CHALLENGE.title} pc={pc}>
                 <div style={{ padding: "1.5rem", display: "flex", gap: "1.5rem", alignItems: "flex-start" }}>
-                  <ChallengeImage label={ACTIVE_CHALLENGE.label} color={pc} logoUrl={logoPreview} />
+                  <ChallengeImage label={ACTIVE_CHALLENGE.label} image={ACTIVE_CHALLENGE.image} />
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: "0.95rem", color: "#555", margin: "0 0 0.5rem", lineHeight: 1.7 }}>{ACTIVE_CHALLENGE.description}</p>
-                    <p style={{ fontSize: "0.9rem", color: pc, margin: "0 0 1rem", fontWeight: 500 }}>{ACTIVE_CHALLENGE.hashtags}</p>
-                    <ProgressBarWithArrow pct={ACTIVE_CHALLENGE.pct} color={pc} height={22} />
+                    <p style={{ fontSize: "0.9rem", color: sc, margin: "0 0 1rem", fontWeight: 500 }}>{ACTIVE_CHALLENGE.hashtags}</p>
+                    <ProgressBarWithArrow pct={ACTIVE_CHALLENGE.pct} color={pc} height={24} />
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", color: "#666", marginTop: "0.5rem" }}>
                       <span><strong>{ACTIVE_CHALLENGE.currentGifts}</strong> family gifts</span>
                       <span><strong>{ACTIVE_CHALLENGE.toGo}</strong> to go</span>
@@ -856,7 +707,7 @@ export default function BoostLeadMagnet() {
               {COMPLETED_CHALLENGES.map((ch, i) => (
                 <ChallengeCardShell key={i} title={ch.title} pc={pc}>
                   <div style={{ padding: "1.5rem", display: "flex", gap: "1.5rem", alignItems: "flex-start" }}>
-                    <ChallengeImage label={ch.label} color={pc} logoUrl={logoPreview} />
+                    <ChallengeImage label={ch.label} image={ch.image} />
                     <div style={{ flex: 1 }}>
                       <p style={{ fontSize: "0.95rem", color: "#555", margin: "0 0 0.75rem", lineHeight: 1.7 }}>{ch.description}</p>
                       {ch.thanks && <p style={{ fontSize: "0.9rem", color: pc, fontWeight: 600, margin: "0 0 0.75rem" }}>{ch.thanks}</p>}
@@ -872,46 +723,33 @@ export default function BoostLeadMagnet() {
             </div>
           )}
 
-          {/* ── LEADERBOARDS TAB ── */}
+          {/* ── LEADERBOARDS ── */}
           {activeTab === "leaderboards" && form.showLeaderboards && (
             <div>
               <h2 style={{ fontSize: "1.35rem", fontWeight: 700, color: "#333", margin: "0 0 1.5rem" }}>{sn} Community Leaderboard</h2>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "0.75rem 0", borderBottom: "1px solid #e9e9e9", marginBottom: "0" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "0.75rem 0", borderBottom: "1px solid #e9e9e9" }}>
                 <span style={{ color: sc, fontWeight: 600, fontSize: "0.95rem", minWidth: 150, textDecoration: "underline", cursor: "pointer" }}>Affiliation</span>
                 <span style={{ color: sc, fontWeight: 600, fontSize: "0.95rem", textDecoration: "underline", cursor: "pointer" }}># Donors ↓</span>
               </div>
-
               {MOCK_LEADERBOARD.map((r, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "0.85rem 0", borderBottom: "1px solid #e9e9e9" }}>
                   <span style={{ color: sc, fontWeight: 500, fontSize: "0.95rem", minWidth: 150, cursor: "pointer", textDecoration: "underline" }}>{r.affiliation}</span>
                   <div style={{ flex: 1 }}>
-                    <div style={{
-                      background: pc,
-                      borderRadius: 4,
-                      height: 32,
-                      width: Math.round((r.donors / maxLB) * 100) + "%",
-                      minWidth: 40,
-                      display: "flex", alignItems: "center", justifyContent: "flex-end",
-                      paddingRight: 10, boxSizing: "border-box",
-                    }}>
+                    <div style={{ background: pc, borderRadius: 4, height: 32, width: Math.round((r.donors / maxLB) * 100) + "%", minWidth: 40, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 10, boxSizing: "border-box" }}>
                       <span style={{ color: "#fff", fontSize: "0.88rem", fontWeight: 700 }}>{r.donors}</span>
                     </div>
                   </div>
                 </div>
               ))}
-
               <div style={{ marginTop: "1rem" }}>
-                <span style={{ color: pc, fontSize: "0.95rem", fontWeight: 500, cursor: "pointer", textDecoration: "underline" }}>Show more</span>
+                <span style={{ color: sc, fontSize: "0.95rem", fontWeight: 500, cursor: "pointer", textDecoration: "underline" }}>Show more</span>
               </div>
 
               <h2 style={{ fontSize: "1.35rem", fontWeight: 700, color: "#333", margin: "3rem 0 1.5rem" }}>Current Family Participation by Class</h2>
-
               <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "0.75rem 0", borderBottom: "1px solid #e9e9e9" }}>
                 <span style={{ color: sc, fontWeight: 600, fontSize: "0.95rem", minWidth: 90, textDecoration: "underline", cursor: "pointer" }}>Class year</span>
                 <span style={{ color: sc, fontWeight: 600, fontSize: "0.95rem", textDecoration: "underline", cursor: "pointer" }}>Participation ↓</span>
               </div>
-
               {CLASS_PARTICIPATION.map((c, i) => (
                 <div key={i} style={{ padding: "0.85rem 0", borderBottom: "1px solid #e9e9e9" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", marginBottom: "0.5rem" }}>
@@ -919,44 +757,37 @@ export default function BoostLeadMagnet() {
                     <span style={{ fontSize: "0.85rem", color: "#666" }}>{c.supported} of {c.total} have supported</span>
                   </div>
                   <div style={{ marginLeft: 106 }}>
-                    <ProgressBarWithArrow pct={c.pct} color={pc} height={26} />
+                    <ProgressBarPlain pct={c.pct} color={pc} height={26} />
                   </div>
                 </div>
               ))}
-
               <div style={{ marginTop: "1rem" }}>
-                <span style={{ color: pc, fontSize: "0.95rem", fontWeight: 500, cursor: "pointer", textDecoration: "underline" }}>Show more</span>
+                <span style={{ color: sc, fontSize: "0.95rem", fontWeight: 500, cursor: "pointer", textDecoration: "underline" }}>Show more</span>
               </div>
             </div>
           )}
 
-          {/* ── SUPPORTERS TAB ── */}
+          {/* ── SUPPORTERS ── */}
           {activeTab === "supporters" && (
             <div>
               <h3 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#333", margin: "0 0 1rem" }}>Supporters ({fmtC(suppCount)})</h3>
               <div style={{ marginBottom: "1.5rem" }}>
-                <select style={{ width: "100%", padding: "0.65rem 0.85rem", border: "1px solid #e0e0e0", borderRadius: 4, fontSize: "0.9rem", color: "#555", fontFamily: "inherit", background: "#fff" }}>
-                  <option>All ({fmtC(suppCount)})</option>
+                <select value={supporterFilter} onChange={(e) => setSupporterFilter(e.target.value)} style={{ width: "100%", padding: "0.65rem 0.85rem", border: "1px solid #e0e0e0", borderRadius: 4, fontSize: "0.9rem", color: "#555", fontFamily: "inherit", background: "#fff" }}>
+                  <option value="">All ({fmtC(suppCount)})</option>
+                  {SUPPORTER_FILTER_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
                 </select>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
-                {MOCK_SUPPORTERS.map((s, i) => (
+                {filteredSupporters.map((s, i) => (
                   <div key={i} style={{ background: "#fff", border: "1px solid #e9e9e9", borderRadius: 4, padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                     <div style={{ fontWeight: 700, color: "#333", fontSize: "1rem" }}>{s.name}</div>
                     {s.affiliations.map((a, j) => (
-                      <span key={j} style={{ color: pc, fontSize: "0.88rem", cursor: "pointer", textDecoration: "underline" }}>{a}</span>
+                      <span key={j} style={{ color: sc, fontSize: "0.88rem", cursor: "pointer", textDecoration: "underline" }}>{a}</span>
                     ))}
                     {s.quote && (
-                      <div style={{
-                        marginTop: "0.75rem",
-                        borderLeft: `4px solid ${pc}`,
-                        background: `${pc}12`,
-                        borderRadius: "0 4px 4px 0",
-                        padding: "0.75rem 1rem",
-                        display: "flex",
-                        gap: "0.75rem",
-                        alignItems: "flex-start"
-                      }}>
+                      <div style={{ marginTop: "0.75rem", borderLeft: `4px solid ${pc}`, background: `${pc}12`, borderRadius: "0 4px 4px 0", padding: "0.75rem 1rem", display: "flex", gap: "0.75rem", alignItems: "flex-start" }}>
                         <QuoteIcon color={pc} size={20} />
                         <p style={{ fontSize: "0.9rem", color: "#444", margin: 0, lineHeight: 1.6 }}>{s.quote}</p>
                       </div>
@@ -967,7 +798,7 @@ export default function BoostLeadMagnet() {
             </div>
           )}
 
-          {/* ── COMMENTS TAB ── */}
+          {/* ── COMMENTS ── */}
           {activeTab === "comments" && (
             <div>
               <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#555", margin: "0 0 1.5rem", lineHeight: 1.4 }}>
@@ -977,9 +808,7 @@ export default function BoostLeadMagnet() {
                 <label style={{ fontSize: "0.85rem", color: "#888", display: "block", marginBottom: "0.35rem" }}>Show comments by affiliation</label>
                 <select style={{ width: "100%", padding: "0.65rem 0.85rem", border: "1px solid #e0e0e0", borderRadius: 4, fontSize: "0.9rem", color: "#555", fontFamily: "inherit", background: "#fff" }}>
                   <option>Select affiliation(s)...</option>
-                  {[...new Set(MOCK_COMMENTS.map(c => c.affiliation))].map((aff, i) => (
-                    <option key={i} value={aff}>{aff}</option>
-                  ))}
+                  {SUPPORTER_FILTER_OPTIONS.map((opt, i) => <option key={i} value={opt}>{opt}</option>)}
                 </select>
               </div>
               <div style={{ marginBottom: "1.75rem" }}>
@@ -1006,7 +835,6 @@ export default function BoostLeadMagnet() {
             </div>
           )}
 
-          {/* Bottom CTA */}
           <div style={{ marginTop: "2.5rem" }}>
             <CTAButton />
           </div>
@@ -1023,47 +851,18 @@ export default function BoostLeadMagnet() {
       {/* ── FOOTER ── */}
       <div style={{ background: pc, marginTop: "3rem", padding: "3rem 1.5rem" }}>
         <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
-          <div style={{ marginBottom: "2rem" }}>
-            {logoPreview ? (
-              <img src={logoPreview} alt={sn} style={{ height: 60, objectFit: "contain" }} />
-            ) : (
-              <CrestIcon color="#fff" size={60} />
-            )}
+          <div style={{ marginBottom: "2rem", display: "flex", justifyContent: "center" }}>
+            <LogoCard logoPreview={logoPreview} fn={fn} sn={sn} pc={pc} />
           </div>
-
-          <div style={{
-            background: "#fff",
-            borderRadius: 4,
-            padding: "2rem 2.5rem",
-            boxShadow: "0 4px 16px rgba(0,0,0,.15)"
-          }}>
-            <h3 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#333", margin: "0 0 0.75rem" }}>
-              Want this for {sn}?
-            </h3>
+          <div style={{ background: "#fff", borderRadius: 4, padding: "2rem 2.5rem", boxShadow: "0 4px 16px rgba(0,0,0,.15)" }}>
+            <h3 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#333", margin: "0 0 0.75rem" }}>Want this for {sn}?</h3>
             <p style={{ fontSize: "0.95rem", color: "#666", margin: "0 0 1.5rem", lineHeight: 1.6 }}>
               See how Boost can help your school raise more money from more supporters with beautiful giving pages like this one.
             </p>
-            <a
-              href="https://www.boostmyschool.com/demo"
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                display: "inline-block",
-                padding: "0.9rem 2.5rem",
-                background: sc,
-                color: "#fff",
-                borderRadius: 4,
-                fontSize: "0.95rem",
-                fontWeight: 700,
-                textDecoration: "none",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em"
-              }}
-            >
+            <a href="https://www.boostmyschool.com/demo" target="_blank" rel="noreferrer" style={{ display: "inline-block", padding: "0.9rem 2.5rem", background: sc, color: "#fff", borderRadius: 4, fontSize: "0.95rem", fontWeight: 700, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               Book a Demo
             </a>
           </div>
-
           <div style={{ marginTop: "2rem", fontSize: "0.8rem", color: "rgba(255,255,255,.6)" }}>
             Powered by <strong style={{ color: "rgba(255,255,255,.8)" }}>Boost My School</strong>
           </div>

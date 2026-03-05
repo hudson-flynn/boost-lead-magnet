@@ -534,6 +534,11 @@ export default function BoostLeadMagnet() {
     setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100);
   };
 
+  useEffect(() => {
+    const fundName = form.fundName.trim();
+    document.title = step === "preview" && fundName ? fundName : "Boost My School";
+  }, [step, form.fundName]);
+
   const goalNum = parseInt(form.fundraisingGoal) || 100000;
   const suppGoalNum = parseInt(form.supporterGoal) || 500;
   const amtRaised = Math.round(goalNum * 1.05);

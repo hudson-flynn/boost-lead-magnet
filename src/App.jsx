@@ -88,10 +88,10 @@ const MOCK_SUPPORTERS = [
 const SUPPORTER_FILTER_OPTIONS = ["Current Parent", "Past Parent", "Alumni", "Faculty/Staff", "Grandparent", "Trustee", "Friend of School"];
 
 const MOCK_COMMENTS = [
-  { name: "Rachel T.", affiliation: "Parent '30", time: "3 weeks ago", text: "I didn't expect to get emotional filling out a donation form. Then I thought about my son's face when his teacher tracked down a book he'd mentioned once in passing, just because she was paying attention. We give because teachers here pay attention.", image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&q=80" },
-  { name: "Thomas B.", affiliation: "Alumni '03", time: "3 weeks ago", text: "I graduated 22 years ago and I still use what I learned here. Not the facts. The way I think through a hard problem. The way I don't give up. You can't put a dollar amount on that kind of education.", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&q=80" },
-  { name: "Diane & Paul F.", affiliation: "Parent '28", time: "a month ago", text: "Our kid said school is her favorite place. She's 13. Let that sink in.", image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&q=80" },
-  { name: "Chris A.", affiliation: "Alumni '09", time: "a month ago", text: "I came back for alumni weekend last fall and walked into my old English classroom. My teacher is still there. Same room, same energy, different kids who have no idea how lucky they are. Really glad to still be giving.", image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&q=80" },
+  { name: "Rachel T.", affiliation: "Parent '30", time: "3 weeks ago", text: "I didn't expect to get emotional filling out a donation form. Then I thought about my son's face when his teacher tracked down a book he'd mentioned once in passing, just because she was paying attention. We give because teachers here pay attention.", image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=700&q=80" },
+  { name: "Thomas B.", affiliation: "Alumni '03", time: "3 weeks ago", text: "I graduated 22 years ago and I still use what I learned here. Not the facts. The way I think through a hard problem. The way I don't give up. You can't put a dollar amount on that kind of education.", image: "https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=700&q=80" },
+  { name: "Diane & Paul F.", affiliation: "Parent '28", time: "a month ago", text: "Our kid said school is her favorite place. She's 13. Let that sink in.", image: "https://images.unsplash.com/photo-1511895426328-dc8714191011?w=700&q=80" },
+  { name: "Chris A.", affiliation: "Alumni '09", time: "a month ago", text: "I came back for alumni weekend last fall and walked into my old English classroom. My teacher is still there. Same room, same energy, different kids who have no idea how lucky they are. Really glad to still be giving.", image: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=700&q=80" },
   { name: "The Martinez Family", affiliation: "Parent '31", time: "a month ago", text: "Our daughter came home and told us her teacher had stayed after school for two hours just to help her understand one concept. That's what we're supporting. Teachers who show up like that." },
   { name: "Jennifer L.", affiliation: "Past Parent '22", time: "a month ago", text: "Three kids through this school. I've watched each of them become more confident, more curious, more kind. I don't know how much was this place and how much was just them. But I know this place had everything to do with it." },
   { name: "Christine M.", affiliation: "Faculty/Staff", time: "a month ago", text: "I've been teaching for 22 years. This is the only place I've worked where the parents and the school are genuinely on the same team. Your support means more to us than you know." },
@@ -913,18 +913,20 @@ export default function BoostLeadMagnet() {
               </div>
               <div style={{ columnCount: 2, columnGap: "1.25rem" }}>
                 {[...MOCK_COMMENTS].sort((a, b) => (b.image ? 1 : 0) - (a.image ? 1 : 0)).map((c, i) => (
-                  <div key={i} style={{ breakInside: "avoid", background: "#fff", border: "1px solid #e9e9e9", borderRadius: 4, padding: "1.25rem", marginBottom: "1.25rem" }}>
-                    <div style={{ display: "flex", gap: "0.85rem", alignItems: "flex-start" }}>
-                      {c.image
-                        ? <img src={c.image} alt={c.name} style={{ width: 42, height: 42, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
-                        : <CrestIcon color={pc} size={42} logoUrl={logoPreview} />
-                      }
+                  <div key={i} style={{ breakInside: "avoid", background: "#fff", border: "1px solid #e9e9e9", borderRadius: 4, overflow: "hidden", marginBottom: "1.25rem" }}>
+                    <div style={{ display: "flex", gap: "0.85rem", alignItems: "flex-start", padding: "1.25rem 1.25rem 0" }}>
+                      <CrestIcon color={pc} size={42} logoUrl={logoPreview} />
                       <div>
                         <div style={{ fontWeight: 700, color: "#333", fontSize: "0.92rem" }}>{c.name} <span style={{ fontWeight: 400, color: "#777" }}>({c.affiliation})</span></div>
                         <div style={{ fontSize: "0.8rem", color: "#999" }}>{c.time}</div>
                       </div>
                     </div>
-                    <p style={{ fontSize: "0.92rem", color: "#555", margin: "0.85rem 0 0", lineHeight: 1.65 }}>{c.text}</p>
+                    {c.image && (
+                      <div style={{ marginTop: "1rem" }}>
+                        <img src={c.image} alt="" style={{ width: "100%", display: "block", maxHeight: 280, objectFit: "cover" }} />
+                      </div>
+                    )}
+                    <p style={{ fontSize: "0.92rem", color: "#555", margin: 0, padding: "0.85rem 1.25rem 1.25rem", lineHeight: 1.65 }}>{c.text}</p>
                   </div>
                 ))}
               </div>

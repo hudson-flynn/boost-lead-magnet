@@ -6,20 +6,20 @@ const SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbwOyjIFKC7OWmvm_
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 const GIVING_BUCKETS = [
-  { title: "Greatest Need", description: "By supporting the Area of Greatest Need, you are investing in the experience for our students. This fund provides flexible resources where they matter most.", image: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=600&q=80" },
-  { title: "Financial Aid", description: "Help ensure that a quality education remains accessible to deserving students regardless of their family's financial circumstances.", image: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&q=80" },
-  { title: "Athletics", description: "Support our athletic programs and help student-athletes develop teamwork, discipline, and leadership skills both on and off the field.", image: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&q=80" },
-  { title: "Arts & Music", description: "Nurture creativity and self-expression through visual arts, theater, and music programs that enrich our students' educational experience.", image: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=600&q=80" },
-  { title: "Faculty Development", description: "Invest in our exceptional teachers through professional development opportunities that enhance their skills and keep them at the forefront of education.", image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&q=80" },
-  { title: "Technology", description: "Ensure our students have access to cutting-edge technology and digital resources that prepare them for success in a rapidly changing world.", image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&q=80" },
+  { title: "Greatest Need", description: "Not sure where your gift does the most good? This is it. The Greatest Need fund goes wherever the school needs it most, right now.", image: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=600&q=80" },
+  { title: "Financial Aid", description: "A lot of families stretch to be here. Your support helps the school say yes to students who belong here, no matter what.", image: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&q=80" },
+  { title: "Athletics", description: "Sports here are about more than winning. Your gift keeps programs running so every student who wants to compete gets the chance.", image: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&q=80" },
+  { title: "Arts & Music", description: "Art and music are where a lot of kids find themselves. Gifts here keep those programs funded and the doors open to every student.", image: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=600&q=80" },
+  { title: "Faculty Development", description: "The best teachers never stop learning. Gifts here fund workshops, conferences, and real time for our faculty to grow.", image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&q=80" },
+  { title: "Technology", description: "From design tools to research platforms, this fund keeps classrooms equipped with what students actually need to do their best work.", image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&q=80" },
 ];
 
 const FAQ_ITEMS = [
-  { q: "How do I make a gift?", a: "Click on any giving bucket above or use the \"Give or Pledge Today\" button. You can give by credit card, ACH bank transfer, or set up a recurring pledge." },
-  { q: "Is my gift tax-deductible?", a: "Yes. Our school is a 501(c)(3) nonprofit organization. You will receive a tax receipt via email immediately after your gift is processed." },
-  { q: "Can I make a recurring gift?", a: "Absolutely. During checkout you can choose monthly, quarterly, or annual recurring gifts to provide sustained support." },
-  { q: "Can I give to more than one fund?", a: "Yes. You can split your gift across multiple giving buckets during checkout. Many donors support both Greatest Need and a specific program." },
-  { q: "Who do I contact with questions?", a: "Please reach out to our advancement office directly. Contact information is available in the footer of this page." },
+  { q: "How do I make a gift?", a: "Click any giving bucket or the button at the top. You can pay by card, Venmo, Apple Pay, PayPal, ACH bank transfer, or donor advised fund. Employer matching is supported too." },
+  { q: "Is my gift tax-deductible?", a: "Yes. The school is a registered 501(c)(3). Your tax receipt will hit your inbox right after your gift goes through." },
+  { q: "Can I make a recurring gift?", a: "Yes. You can set up monthly, quarterly, or annual giving at checkout. A lot of donors find it easier to give a smaller amount on a recurring basis than one big gift." },
+  { q: "Can I give to more than one fund?", a: "Yes. You can split your gift between buckets at checkout. A lot of donors give to Greatest Need plus one area they care about most." },
+  { q: "Who do I contact with questions?", a: "Reach out to the advancement office directly. You'll find contact info in the footer of this page." },
 ];
 
 const MOCK_LEADERBOARD = [
@@ -70,7 +70,7 @@ const MOCK_SUPPORTERS = [
   { name: "The Martinez Family", affiliations: ["Parent '31", "Parent '33"], type: "Current Parent", quote: "Our daughter came home last year and told us her teacher had stayed after school for two hours just to help her through one concept. That kind of dedication is what we're supporting." },
   { name: "Sarah & David K.", affiliations: ["Alumni '98", "Parent '28"], type: "Current Parent", quote: null },
   { name: "The Thompson Family", affiliations: ["Parent '30"], type: "Current Parent", quote: null },
-  { name: "Jennifer L.", affiliations: ["Past Parent '22", "Grandparent '33, '36"], type: "Past Parent", quote: "Three kids through this school. I've watched each of them become more confident, more curious, more kind. I don't know how much was this place and how much was just them — but I know this place had everything to do with it." },
+  { name: "Jennifer L.", affiliations: ["Past Parent '22", "Grandparent '33, '36"], type: "Past Parent", quote: "Three kids through this school. I've watched each of them become more confident, more curious, more kind. I don't know how much was this place and how much was just them. But I know this place had everything to do with it." },
   { name: "Michael & Lisa R.", affiliations: ["Parent '29"], type: "Current Parent", quote: null },
   { name: "Anonymous", affiliations: ["Alumni '05"], type: "Alumni", quote: null },
   { name: "The Patel Family", affiliations: ["Parent '32"], type: "Current Parent", quote: "Our son talks about his teachers the way I used to talk about my best friends. That tells you everything you need to know about this place." },
@@ -88,7 +88,11 @@ const MOCK_SUPPORTERS = [
 const SUPPORTER_FILTER_OPTIONS = ["Current Parent", "Past Parent", "Alumni", "Faculty/Staff", "Grandparent", "Trustee", "Friend of School"];
 
 const MOCK_COMMENTS = [
-  { name: "The Martinez Family", affiliation: "Parent '31", time: "a month ago", text: "Our daughter came home and told us her teacher had stayed after school for two hours just to help her understand one concept. That's what we're supporting — teachers who show up like that." },
+  { name: "Rachel T.", affiliation: "Parent '30", time: "3 weeks ago", text: "I didn't expect to get emotional filling out a donation form. Then I thought about my son's face when his teacher tracked down a book he'd mentioned once in passing, just because she was paying attention. We give because teachers here pay attention.", image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&q=80" },
+  { name: "Thomas B.", affiliation: "Alumni '03", time: "3 weeks ago", text: "I graduated 22 years ago and I still use what I learned here. Not the facts. The way I think through a hard problem. The way I don't give up. You can't put a dollar amount on that kind of education.", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&q=80" },
+  { name: "Diane & Paul F.", affiliation: "Parent '28", time: "a month ago", text: "Our kid said school is her favorite place. She's 13. Let that sink in.", image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&q=80" },
+  { name: "Chris A.", affiliation: "Alumni '09", time: "a month ago", text: "I came back for alumni weekend last fall and walked into my old English classroom. My teacher is still there. Same room, same energy, different kids who have no idea how lucky they are. Really glad to still be giving.", image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&q=80" },
+  { name: "The Martinez Family", affiliation: "Parent '31", time: "a month ago", text: "Our daughter came home and told us her teacher had stayed after school for two hours just to help her understand one concept. That's what we're supporting. Teachers who show up like that." },
   { name: "Jennifer L.", affiliation: "Past Parent '22", time: "a month ago", text: "Three kids through this school. I've watched each of them become more confident, more curious, more kind. I don't know how much was this place and how much was just them. But I know this place had everything to do with it." },
   { name: "Christine M.", affiliation: "Faculty/Staff", time: "a month ago", text: "I've been teaching for 22 years. This is the only place I've worked where the parents and the school are genuinely on the same team. Your support means more to us than you know." },
   { name: "Anonymous", affiliation: "Alumni '05", time: "2 months ago", text: "A teacher here told me I was a writer when I was pretty sure I was nothing. I've been a journalist for 12 years. I give back every year because of her." },
@@ -292,7 +296,7 @@ function GiveModal({ sn, sc, pc, onClose }) {
           Want to see what making a gift looks like?
         </h2>
         <p style={{ fontSize: "0.95rem", color: "#666", lineHeight: 1.7, margin: "0 0 1.75rem" }}>
-          On a real Boost page, donors can give by card, ACH bank transfer, or pledge over time — with a receipt in seconds. Book a demo to see the full experience for {sn}.
+          On a real Boost page, donors can give by card, Venmo, Apple Pay, PayPal, ACH bank transfer, or donor advised fund. Employer matching is built right in. Receipts hit their inbox in seconds. Book a demo to see the full giving experience for {sn}.
         </p>
         <a
           href="https://www.boostmyschool.com/demo"
@@ -484,6 +488,19 @@ export default function BoostLeadMagnet() {
     );
   }
 
+  const ChallengeGiftButton = () => {
+    const [hovered, setHovered] = useState(false);
+    return (
+      <button
+        onClick={() => setShowGiveModal(true)}
+        style={{ padding: "0.75rem 2rem", border: "2px solid " + sc, background: hovered ? sc : "#fff", color: hovered ? "#fff" : sc, fontWeight: 700, fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.04em", borderRadius: 4, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s" }}
+        onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
+      >
+        Create Your Challenge Gift
+      </button>
+    );
+  };
+
   const GiveBucketButton = () => {
     const [hovered, setHovered] = useState(false);
     return (
@@ -533,7 +550,7 @@ export default function BoostLeadMagnet() {
             <div style={{ flex: 1 }}>
               <h1 style={{ fontSize: "2.1rem", fontWeight: 700, color: "#fff", margin: "0 0 1rem", lineHeight: 1.2 }}>{fn}</h1>
               <p style={{ fontSize: "0.95rem", color: "rgba(255,255,255,.93)", lineHeight: 1.75, margin: "0 0 1.25rem", maxWidth: 560 }}>
-                When you make a gift to {sn}, you invest in our students and faculty. The {fn} is essential to our school, supporting current-year operating expenses not covered by tuition.
+                Every gift to {sn} goes directly to the programs, teachers, and experiences that define this place. The {fn} covers what tuition doesn't, and it touches every corner of school life.
               </p>
               <div style={{ marginBottom: "1rem", maxWidth: 540 }}>
                 <ProgressBarWithArrow pct={pctFunded} color={sc} height={28} />
@@ -642,9 +659,9 @@ export default function BoostLeadMagnet() {
               )}
 
               <div style={{ marginTop: "1.5rem" }}>
-                <p style={{ fontSize: "0.95rem", lineHeight: 1.8, color: "#555" }}>Thank you for supporting the {fn}! Your generosity helps provide exceptional educational experiences for our students.</p>
-                <p style={{ fontSize: "0.9rem", lineHeight: 1.8, color: "#777", fontStyle: "italic", marginTop: "1rem" }}>The fiscal year runs from July 1 through June 30. Gifts can be made by credit card, ACH, or check. For stock transfers or planned giving, please contact the advancement office.</p>
-                <p style={{ fontSize: "0.95rem", fontWeight: 700, color: "#333", marginTop: "1rem" }}>Thank you for your support!</p>
+                <p style={{ fontSize: "0.95rem", lineHeight: 1.8, color: "#555" }}>Your gift to the {fn} keeps this school running at its best. Tuition covers the basics. Your support covers everything else.</p>
+                <p style={{ fontSize: "0.9rem", lineHeight: 1.8, color: "#777", fontStyle: "italic", marginTop: "1rem" }}>The fiscal year runs July 1 through June 30. You can give by card, ACH bank transfer, check, or stock transfer. For planned giving questions, reach out to the advancement office directly.</p>
+                <p style={{ fontSize: "0.95rem", fontWeight: 700, color: "#333", marginTop: "1rem" }}>Thank you for being part of this.</p>
               </div>
               <div style={{ marginTop: "2rem" }}>
                 {ABOUT_UPDATES.map((u, i) => (
@@ -683,9 +700,7 @@ export default function BoostLeadMagnet() {
             <div>
               <div style={{ marginBottom: "2rem" }}>
                 <p style={{ fontSize: "1.1rem", fontWeight: 600, color: "#333", margin: "0 0 1rem" }}>Want to challenge other members of the community?</p>
-                <button onClick={() => setShowGiveModal(true)} style={{ padding: "0.75rem 2rem", border: "2px solid " + sc, background: "#fff", color: sc, fontWeight: 700, fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.04em", borderRadius: 4, cursor: "pointer", fontFamily: "inherit" }}>
-                  Create Your Challenge Gift
-                </button>
+                <ChallengeGiftButton />
               </div>
 
               <ChallengeCardShell title={ACTIVE_CHALLENGE.title} pc={pc}>
@@ -819,10 +834,13 @@ export default function BoostLeadMagnet() {
                 </div>
               </div>
               <div style={{ columnCount: 2, columnGap: "1.25rem" }}>
-                {MOCK_COMMENTS.map((c, i) => (
+                {[...MOCK_COMMENTS].sort((a, b) => (b.image ? 1 : 0) - (a.image ? 1 : 0)).map((c, i) => (
                   <div key={i} style={{ breakInside: "avoid", background: "#fff", border: "1px solid #e9e9e9", borderRadius: 4, padding: "1.25rem", marginBottom: "1.25rem" }}>
                     <div style={{ display: "flex", gap: "0.85rem", alignItems: "flex-start" }}>
-                      <CrestIcon color={pc} size={42} logoUrl={logoPreview} />
+                      {c.image
+                        ? <img src={c.image} alt={c.name} style={{ width: 42, height: 42, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                        : <CrestIcon color={pc} size={42} logoUrl={logoPreview} />
+                      }
                       <div>
                         <div style={{ fontWeight: 700, color: "#333", fontSize: "0.92rem" }}>{c.name} <span style={{ fontWeight: 400, color: "#777" }}>({c.affiliation})</span></div>
                         <div style={{ fontSize: "0.8rem", color: "#999" }}>{c.time}</div>
@@ -857,7 +875,7 @@ export default function BoostLeadMagnet() {
           <div style={{ background: "#fff", borderRadius: 4, padding: "2rem 2.5rem", boxShadow: "0 4px 16px rgba(0,0,0,.15)" }}>
             <h3 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#333", margin: "0 0 0.75rem" }}>Want this for {sn}?</h3>
             <p style={{ fontSize: "0.95rem", color: "#666", margin: "0 0 1.5rem", lineHeight: 1.6 }}>
-              See how Boost can help your school raise more money from more supporters with beautiful giving pages like this one.
+              You just saw what your school's giving page could look like. We can have it live in days. Book a 20-minute demo to see the full donor experience.
             </p>
             <a href="https://www.boostmyschool.com/demo" target="_blank" rel="noreferrer" style={{ display: "inline-block", padding: "0.9rem 2.5rem", background: sc, color: "#fff", borderRadius: 4, fontSize: "0.95rem", fontWeight: 700, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               Book a Demo

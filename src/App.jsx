@@ -54,7 +54,7 @@ const ACTIVE_CHALLENGE = {
 const COMPLETED_CHALLENGES = [
   {
     title: "Alumni Giving Challenge", label: "ALUMNI",
-    image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=300&q=80",
+    image: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=300&q=80",
     description: "A generous donor gave $500 because 100 alumni made a gift. Challenge complete!",
     amount: "$500", count: 100, labelText: "alumni gifts"
   },
@@ -250,8 +250,7 @@ function ChallengeImage({ label, image }) {
 
 // Progress bar WITH arrow (hero + challenge cards only)
 function ProgressBarWithArrow({ pct, color, height = 24 }) {
-  const cappedPct = Math.min(pct, 100);
-  const fillWidth = Math.max(cappedPct, 3);
+  const fillWidth = Math.max(Math.min(pct, 100), 3);
   const arrowW = Math.round(height * 0.65);
 
   return (
@@ -543,7 +542,7 @@ export default function BoostLeadMagnet() {
   const suppGoalNum = parseInt(form.supporterGoal) || 500;
   const amtRaised = Math.round(goalNum * 1.05);
   const suppCount = Math.round(suppGoalNum * 1.05);
-  const pctFunded = Math.min(Math.round((amtRaised / goalNum) * 100), 100);
+  const pctFunded = Math.round((amtRaised / goalNum) * 100);
   const pc = form.primaryColor || "#1b603a";
   const sc = form.secondaryColor || "#76bd22";
   const sn = form.schoolName || "Your School";

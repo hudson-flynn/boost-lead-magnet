@@ -439,6 +439,7 @@ export default function BoostLeadMagnet() {
   const [supporterFilter, setSupporterFilter] = useState("");
   const [commentFilter, setCommentFilter] = useState("");
   const [logoId, setLogoId] = useState(null);
+  const [logoUploadStatus, setLogoUploadStatus] = useState("idle"); // idle | uploading | done | error
   const [form, setForm] = useState({
     schoolName: "", fundName: "", fundraisingGoal: "", supporterGoal: "",
     primaryColor: "#1b603a", secondaryColor: "#76bd22", logo: null,
@@ -472,28 +473,33 @@ export default function BoostLeadMagnet() {
     const file = e.target.files[0];
     if (file) {
       updateForm("logo", file);
+      setLogoUploadStatus("idle");
       const r = new FileReader();
       r.onload = (ev) => {
         const dataUrl = ev.target.result;
         setLogoPreview(dataUrl);
         try { localStorage.setItem("boost_logo", dataUrl); } catch {}
+        setLogoUploadStatus("uploading");
         resizeLogoForUpload(dataUrl).then((resized) => {
-          if (!resized) return;
+          if (!resized) { setLogoUploadStatus("error"); return; }
           fetch("/api/logo", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ logo: resized }),
           })
             .then((res) => res.json())
-            .then((data) => { if (data.id) setLogoId(data.id); })
-            .catch(() => {});
+            .then((data) => {
+              if (data.id) { setLogoId(data.id); setLogoUploadStatus("done"); }
+              else { setLogoUploadStatus("error"); }
+            })
+            .catch(() => { setLogoUploadStatus("error"); });
         });
       };
       r.readAsDataURL(file);
     }
   };
 
-  const canSubmit = form.schoolName.trim() && form.fundName.trim() && form.fundraisingGoal && form.supporterGoal && form.email.trim();
+  const canSubmit = form.schoolName.trim() && form.fundName.trim() && form.fundraisingGoal && form.supporterGoal && form.email.trim() && logoUploadStatus !== "uploading";
 
   const handleSubmit = () => {
     if (!canSubmit) return;
@@ -611,6 +617,9 @@ export default function BoostLeadMagnet() {
                 {logoPreview ? <img src={logoPreview} alt="Logo" style={{ maxHeight: 60, maxWidth: "80%", objectFit: "contain" }} /> : <div style={{ color: "#949494", fontSize: "0.875em" }}>Click to upload your school logo</div>}
                 <input id="logo-upload" type="file" accept="image/*" onChange={handleLogoUpload} style={{ display: "none" }} />
               </div>
+              {logoUploadStatus === "uploading" && <p style={{ fontSize: "0.8em", color: "#888", margin: "0.35rem 0 0" }}>Saving logo for shared links...</p>}
+              {logoUploadStatus === "done" && <p style={{ fontSize: "0.8em", color: "#2a7a2a", margin: "0.35rem 0 0" }}>Logo saved — will appear on shared links</p>}
+              {logoUploadStatus === "error" && <p style={{ fontSize: "0.8em", color: "#c0392b", margin: "0.35rem 0 0" }}>Logo upload failed — logo will only appear on this device</p>}
             </div>
             <div style={{ display: "flex", gap: "2rem" }}>
               <ToggleSwitch label="Challenges tab" checked={form.showChallenges} onChange={(v) => updateForm("showChallenges", v)} color={sc} />

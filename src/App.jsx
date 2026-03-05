@@ -459,10 +459,18 @@ export default function BoostLeadMagnet() {
       setStep("preview");
       if (decoded.logoId) {
         setLogoId(decoded.logoId);
+        console.log('[Boost] Fetching logo from Upstash, id:', decoded.logoId);
         fetch(`/api/logo?id=${decoded.logoId}`)
-          .then((r) => r.json())
-          .then((data) => { if (data.logo) setLogoPreview(data.logo); })
-          .catch(() => {});
+          .then((r) => {
+            console.log('[Boost] /api/logo response status:', r.status);
+            return r.json();
+          })
+          .then((data) => {
+            console.log('[Boost] /api/logo response body:', data);
+            if (data.logo) setLogoPreview(data.logo);
+            else console.warn('[Boost] No logo in response — key missing from Upstash?');
+          })
+          .catch((err) => { console.error('[Boost] Logo fetch failed:', err); });
       } else {
         try { const logo = localStorage.getItem("boost_logo"); if (logo) setLogoPreview(logo); } catch {}
       }
@@ -489,10 +497,11 @@ export default function BoostLeadMagnet() {
           })
             .then((res) => res.json())
             .then((data) => {
+              console.log('[Boost] Logo upload response:', data);
               if (data.id) { setLogoId(data.id); setLogoUploadStatus("done"); }
               else { setLogoUploadStatus("error"); }
             })
-            .catch(() => { setLogoUploadStatus("error"); });
+            .catch((err) => { console.error('[Boost] Logo upload failed:', err); setLogoUploadStatus("error"); });
         });
       };
       r.readAsDataURL(file);

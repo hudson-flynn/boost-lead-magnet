@@ -524,7 +524,7 @@ export default function BoostLeadMagnet() {
     ...(form.showChallenges ? [{ key: "challenges", label: "Challenges", count: 3 }] : []),
     ...(form.showLeaderboards ? [{ key: "leaderboards", label: "Leaderboards", count: 1 }] : []),
     { key: "supporters", label: "Supporters", count: suppCount },
-    { key: "comments", label: "Comments", count: MOCK_COMMENTS.length },
+    { key: "comments", label: "Comments", count: Math.round(suppCount * 0.30) },
   ];
   const showSidebar = activeTab !== "supporters";
 

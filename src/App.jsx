@@ -395,6 +395,8 @@ function LogoCard({ logoPreview, fn, sn, pc }) {
 }
 
 function resizeLogoForUpload(dataUrl) {
+  // SVGs can't be drawn to canvas — return as-is to preserve the vector
+  if (dataUrl.startsWith("data:image/svg")) return Promise.resolve(dataUrl);
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {

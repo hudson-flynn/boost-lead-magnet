@@ -126,7 +126,7 @@ const CRM_OPTIONS = ["Raiser's Edge / RE NXT", "Veracross", "Blackbaud (other)",
 
 // ─── URL hash encoding / decoding ─────────────────────────────────────────────
 
-function encodePreviewHash(form) {
+function encodePreviewHash(form, logoId = null) {
   const data = {
     sn: form.schoolName,
     fn: form.fundName,
@@ -139,6 +139,7 @@ function encodePreviewHash(form) {
     email: form.email,
     ch: form.showChallenges ? 1 : 0,
     lb: form.showLeaderboards ? 1 : 0,
+    ...(logoId ? { lid: logoId } : {}),
   };
   // btoa doesn't handle non-ASCII; encodeURIComponent covers school names with accents etc.
   return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
@@ -160,6 +161,7 @@ function decodePreviewHash(hash) {
       showChallenges: data.ch !== 0,
       showLeaderboards: data.lb !== 0,
       logo: null,
+      logoId: data.lid || null,
     };
   } catch {
     return null;
@@ -355,30 +357,21 @@ function GiveModal({ sn, sc, pc, onClose }) {
 }
 
 // Copy shareable link button
-function CopyLinkButton({ pc, hasLogo }) {
+function CopyLinkButton({ pc }) {
   const [copied, setCopied] = useState(false);
-  const [showTip, setShowTip] = useState(false);
   const handleCopy = () => {
     navigator.clipboard.writeText(window.location.href).then(() => {
       setCopied(true);
-      if (hasLogo) setShowTip(true);
-      setTimeout(() => { setCopied(false); setShowTip(false); }, 3000);
+      setTimeout(() => setCopied(false), 2000);
     });
   };
   return (
-    <div style={{ position: "relative" }}>
-      <button
-        onClick={handleCopy}
-        style={{ padding: "0.4rem 1rem", background: "transparent", color: "#888", border: "1px solid #ddd", borderRadius: 4, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s" }}
-      >
-        {copied ? "Copied!" : "Copy link"}
-      </button>
-      {showTip && (
-        <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, background: "#333", color: "#fff", fontSize: "0.72rem", padding: "0.4rem 0.65rem", borderRadius: 4, whiteSpace: "nowrap", zIndex: 2000, lineHeight: 1.4 }}>
-          Logo won't appear on other devices
-        </div>
-      )}
-    </div>
+    <button
+      onClick={handleCopy}
+      style={{ padding: "0.4rem 1rem", background: "transparent", color: "#888", border: "1px solid #ddd", borderRadius: 4, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s" }}
+    >
+      {copied ? "Copied!" : "Copy link"}
+    </button>
   );
 }
 
@@ -399,6 +392,23 @@ function LogoCard({ logoPreview, fn, sn, pc }) {
       )}
     </div>
   );
+}
+
+function resizeLogoForUpload(dataUrl) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxW = 400;
+      const scale = Math.min(1, maxW / img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.65));
+    };
+    img.onerror = () => resolve(null);
+    img.src = dataUrl;
+  });
 }
 
 function useIsMobile(bp = 768) {
@@ -426,6 +436,7 @@ export default function BoostLeadMagnet() {
   const [showGiveModal, setShowGiveModal] = useState(false);
   const [supporterFilter, setSupporterFilter] = useState("");
   const [commentFilter, setCommentFilter] = useState("");
+  const [logoId, setLogoId] = useState(null);
   const [form, setForm] = useState({
     schoolName: "", fundName: "", fundraisingGoal: "", supporterGoal: "",
     primaryColor: "#1b603a", secondaryColor: "#76bd22", logo: null,
@@ -443,13 +454,41 @@ export default function BoostLeadMagnet() {
     if (decoded) {
       setForm(decoded);
       setStep("preview");
-      try { const logo = localStorage.getItem("boost_logo"); if (logo) setLogoPreview(logo); } catch {}
+      if (decoded.logoId) {
+        setLogoId(decoded.logoId);
+        fetch(`/api/logo?id=${decoded.logoId}`)
+          .then((r) => r.json())
+          .then((data) => { if (data.logo) setLogoPreview(data.logo); })
+          .catch(() => {});
+      } else {
+        try { const logo = localStorage.getItem("boost_logo"); if (logo) setLogoPreview(logo); } catch {}
+      }
     }
   }, []);
 
   const handleLogoUpload = (e) => {
     const file = e.target.files[0];
-    if (file) { updateForm("logo", file); const r = new FileReader(); r.onload = (ev) => { setLogoPreview(ev.target.result); try { localStorage.setItem("boost_logo", ev.target.result); } catch {} }; r.readAsDataURL(file); }
+    if (file) {
+      updateForm("logo", file);
+      const r = new FileReader();
+      r.onload = (ev) => {
+        const dataUrl = ev.target.result;
+        setLogoPreview(dataUrl);
+        try { localStorage.setItem("boost_logo", dataUrl); } catch {}
+        resizeLogoForUpload(dataUrl).then((resized) => {
+          if (!resized) return;
+          fetch("/api/logo", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ logo: resized }),
+          })
+            .then((res) => res.json())
+            .then((data) => { if (data.id) setLogoId(data.id); })
+            .catch(() => {});
+        });
+      };
+      r.readAsDataURL(file);
+    }
   };
 
   const canSubmit = form.schoolName.trim() && form.fundName.trim() && form.fundraisingGoal && form.supporterGoal && form.email.trim();
@@ -457,7 +496,7 @@ export default function BoostLeadMagnet() {
   const handleSubmit = () => {
     if (!canSubmit) return;
     // Build the shareable URL first so we can include it in the sheet row
-    const previewHash = encodePreviewHash(form);
+    const previewHash = encodePreviewHash(form, logoId);
     const previewUrl = `${window.location.origin}${window.location.pathname}#${previewHash}`;
     if (SHEET_ENDPOINT && SHEET_ENDPOINT !== "YOUR_APPS_SCRIPT_URL_HERE") {
       fetch(SHEET_ENDPOINT, {
@@ -625,7 +664,7 @@ export default function BoostLeadMagnet() {
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000, background: "#fff", borderBottom: "2px solid " + sc, padding: "0.5rem 1rem", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 8px rgba(0,0,0,.08)" }}>
         {!isMobile && <div style={{ fontSize: "0.82rem", color: "#535353" }}>Preview of <strong>{sn}</strong> on Boost</div>}
         <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginLeft: isMobile ? "auto" : 0 }}>
-          {!isMobile && <CopyLinkButton pc={pc} hasLogo={!!logoPreview} />}
+          {!isMobile && <CopyLinkButton pc={pc} />}
           <button onClick={() => { window.location.hash = ""; setStep("form"); }} style={{ padding: "0.4rem 1rem", background: "transparent", color: pc, border: "1px solid " + pc, borderRadius: 4, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{isMobile ? "Edit" : "Edit Details"}</button>
           <a href={`https://www.boostmyschool.com/demo?utm_source=lead-magnet&utm_medium=preview&utm_campaign=${encodeURIComponent(sn)}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", padding: "0.4rem 1.25rem", background: sc, color: "#fff", borderRadius: 4, fontSize: "0.78rem", fontWeight: 700, textDecoration: "none", textTransform: "uppercase" }}>{isMobile ? "Book a Demo" : `Book a Demo for ${sn}`}</a>
         </div>

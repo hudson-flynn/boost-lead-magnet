@@ -538,15 +538,6 @@ export default function BoostLeadMagnet() {
     document.title = step === "preview" && fundName ? fundName : "Boost My School";
   }, [step, form.fundName]);
 
-  useEffect(() => {
-    const link = document.querySelector("link[rel~='icon']");
-    if (!link) return;
-    if (step === "preview" && logoPreview) {
-      link.href = logoPreview;
-    } else {
-      link.href = "/vite.svg";
-    }
-  }, [step, logoPreview]);
 
   const goalNum = parseInt(form.fundraisingGoal) || 100000;
   const suppGoalNum = parseInt(form.supporterGoal) || 500;

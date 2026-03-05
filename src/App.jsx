@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 // ─── Sheet endpoint ───────────────────────────────────────────────────────────
 const SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbwOyjIFKC7OWmvm_qFojRcKEpVePXA_X6O1GEYcXVgWqFyclYlFTXrIEMgCIt9xmCh7/exec";
@@ -123,6 +123,48 @@ const RECENT_ACTIVITY = [
 
 const PLATFORM_OPTIONS = ["Raiser's Edge / RE NXT", "GiveCampus", "Blackbaud (other)", "Veracross", "GiveSmart", "Custom / In-house", "Other", "Not sure"];
 const CRM_OPTIONS = ["Raiser's Edge / RE NXT", "Veracross", "Blackbaud (other)", "Salesforce", "HubSpot", "Other", "Not sure"];
+
+// ─── URL hash encoding / decoding ─────────────────────────────────────────────
+
+function encodePreviewHash(form) {
+  const data = {
+    sn: form.schoolName,
+    fn: form.fundName,
+    goal: form.fundraisingGoal,
+    sup: form.supporterGoal,
+    pc: form.primaryColor,
+    sc: form.secondaryColor,
+    plat: form.currentPlatform,
+    crm: form.currentCrm,
+    email: form.email,
+    ch: form.showChallenges ? 1 : 0,
+    lb: form.showLeaderboards ? 1 : 0,
+  };
+  // btoa doesn't handle non-ASCII; encodeURIComponent covers school names with accents etc.
+  return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+}
+
+function decodePreviewHash(hash) {
+  try {
+    const data = JSON.parse(decodeURIComponent(escape(atob(hash))));
+    return {
+      schoolName: data.sn || "",
+      fundName: data.fn || "",
+      fundraisingGoal: data.goal || "",
+      supporterGoal: data.sup || "",
+      primaryColor: data.pc || "#1b603a",
+      secondaryColor: data.sc || "#76bd22",
+      currentPlatform: data.plat || "",
+      currentCrm: data.crm || "",
+      email: data.email || "",
+      showChallenges: data.ch !== 0,
+      showLeaderboards: data.lb !== 0,
+      logo: null,
+    };
+  } catch {
+    return null;
+  }
+}
 
 const DEFAULT_HERO_IMAGE = "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1600&q=80";
 
@@ -299,7 +341,7 @@ function GiveModal({ sn, sc, pc, onClose }) {
           On a real Boost page, donors can give by card, Venmo, Apple Pay, PayPal, ACH bank transfer, or donor advised fund. Employer matching is built right in. Receipts hit their inbox in seconds. Book a demo to see the full giving experience for {sn}.
         </p>
         <a
-          href="https://www.boostmyschool.com/demo"
+          href={`https://www.boostmyschool.com/demo?utm_source=lead-magnet&utm_medium=modal&utm_campaign=${encodeURIComponent(sn)}`}
           target="_blank"
           rel="noreferrer"
           style={{ display: "inline-block", padding: "0.9rem 2.5rem", background: sc, color: "#fff", borderRadius: 4, fontSize: "0.95rem", fontWeight: 700, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}
@@ -309,6 +351,25 @@ function GiveModal({ sn, sc, pc, onClose }) {
         <div style={{ marginTop: "1rem", fontSize: "0.8rem", color: "#aaa" }}>Takes about 20 minutes</div>
       </div>
     </div>
+  );
+}
+
+// Copy shareable link button
+function CopyLinkButton({ pc }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      style={{ padding: "0.4rem 1rem", background: "transparent", color: "#888", border: "1px solid #ddd", borderRadius: 4, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s" }}
+    >
+      {copied ? "Copied!" : "Copy link"}
+    </button>
   );
 }
 
@@ -351,6 +412,17 @@ export default function BoostLeadMagnet() {
   const previewRef = useRef(null);
   const updateForm = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
 
+  // On mount: if a preview hash is in the URL, decode it and skip straight to preview
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    const decoded = decodePreviewHash(hash);
+    if (decoded) {
+      setForm(decoded);
+      setStep("preview");
+    }
+  }, []);
+
   const handleLogoUpload = (e) => {
     const file = e.target.files[0];
     if (file) { updateForm("logo", file); const r = new FileReader(); r.onload = (ev) => setLogoPreview(ev.target.result); r.readAsDataURL(file); }
@@ -373,6 +445,8 @@ export default function BoostLeadMagnet() {
         }),
       }).catch(() => {});
     }
+    // Encode current form state into the URL hash so the preview is shareable
+    window.location.hash = encodePreviewHash(form);
     setStep("preview");
     setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100);
   };
@@ -524,8 +598,9 @@ export default function BoostLeadMagnet() {
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000, background: "#fff", borderBottom: "2px solid " + sc, padding: "0.5rem 1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 8px rgba(0,0,0,.08)" }}>
         <div style={{ fontSize: "0.82rem", color: "#535353" }}>Preview of <strong>{sn}</strong> on Boost</div>
         <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-          <button onClick={() => setStep("form")} style={{ padding: "0.4rem 1rem", background: "transparent", color: pc, border: "1px solid " + pc, borderRadius: 4, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Edit Details</button>
-          <a href="https://www.boostmyschool.com/demo" target="_blank" rel="noreferrer" style={{ display: "inline-block", padding: "0.4rem 1.25rem", background: sc, color: "#fff", borderRadius: 4, fontSize: "0.78rem", fontWeight: 700, textDecoration: "none", textTransform: "uppercase" }}>Book a Demo</a>
+          <CopyLinkButton pc={pc} />
+          <button onClick={() => { window.location.hash = ""; setStep("form"); }} style={{ padding: "0.4rem 1rem", background: "transparent", color: pc, border: "1px solid " + pc, borderRadius: 4, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Edit Details</button>
+          <a href={`https://www.boostmyschool.com/demo?utm_source=lead-magnet&utm_medium=preview&utm_campaign=${encodeURIComponent(sn)}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", padding: "0.4rem 1.25rem", background: sc, color: "#fff", borderRadius: 4, fontSize: "0.78rem", fontWeight: 700, textDecoration: "none", textTransform: "uppercase" }}>Book a Demo for {sn}</a>
         </div>
       </div>
 
@@ -877,8 +952,8 @@ export default function BoostLeadMagnet() {
             <p style={{ fontSize: "0.95rem", color: "#666", margin: "0 0 1.5rem", lineHeight: 1.6 }}>
               You just saw what your school's giving page could look like. We can have it live in days. Book a 20-minute demo to see the full donor experience.
             </p>
-            <a href="https://www.boostmyschool.com/demo" target="_blank" rel="noreferrer" style={{ display: "inline-block", padding: "0.9rem 2.5rem", background: sc, color: "#fff", borderRadius: 4, fontSize: "0.95rem", fontWeight: 700, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Book a Demo
+            <a href={`https://www.boostmyschool.com/demo?utm_source=lead-magnet&utm_medium=footer&utm_campaign=${encodeURIComponent(sn)}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", padding: "0.9rem 2.5rem", background: sc, color: "#fff", borderRadius: 4, fontSize: "0.95rem", fontWeight: 700, textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Book a Demo for {sn}
             </a>
           </div>
           <div style={{ marginTop: "2rem", fontSize: "0.8rem", color: "rgba(255,255,255,.6)" }}>

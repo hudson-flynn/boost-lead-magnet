@@ -90,8 +90,8 @@ const SUPPORTER_FILTER_OPTIONS = ["Current Parent", "Past Parent", "Alumni", "Fa
 const MOCK_COMMENTS = [
   { name: "Rachel T.", affiliation: "Parent '30", time: "3 weeks ago", text: "I didn't expect to get emotional filling out a donation form. Then I thought about my son's face when his teacher tracked down a book he'd mentioned once in passing, just because she was paying attention. We give because teachers here pay attention.", image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=700&q=80" },
   { name: "Thomas B.", affiliation: "Alumni '03", time: "3 weeks ago", text: "I graduated 22 years ago and I still use what I learned here. Not the facts. The way I think through a hard problem. The way I don't give up. You can't put a dollar amount on that kind of education.", image: "https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=700&q=80" },
-  { name: "Diane & Paul F.", affiliation: "Parent '28", time: "a month ago", text: "Our kid said school is her favorite place. She's 13. Let that sink in.", image: "https://images.unsplash.com/photo-1511895426328-dc8714191011?w=700&q=80" },
-  { name: "Chris A.", affiliation: "Alumni '09", time: "a month ago", text: "I came back for alumni weekend last fall and walked into my old English classroom. My teacher is still there. Same room, same energy, different kids who have no idea how lucky they are. Really glad to still be giving.", image: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=700&q=80" },
+  { name: "Diane & Paul F.", affiliation: "Parent '28", time: "a month ago", text: "Our kid said school is her favorite place. She's 13. Let that sink in.", image: "https://images.unsplash.com/photo-1601933470096-0e34634ffcde?w=700&q=80" },
+  { name: "Chris A.", affiliation: "Alumni '09", time: "a month ago", text: "I came back for alumni weekend last fall and walked into my old English classroom. My teacher is still there. Same room, same energy, different kids who have no idea how lucky they are. Really glad to still be giving.", image: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=700&q=80" },
   { name: "The Martinez Family", affiliation: "Parent '31", time: "a month ago", text: "Our daughter came home and told us her teacher had stayed after school for two hours just to help her understand one concept. That's what we're supporting. Teachers who show up like that." },
   { name: "Jennifer L.", affiliation: "Past Parent '22", time: "a month ago", text: "Three kids through this school. I've watched each of them become more confident, more curious, more kind. I don't know how much was this place and how much was just them. But I know this place had everything to do with it." },
   { name: "Christine M.", affiliation: "Faculty/Staff", time: "a month ago", text: "I've been teaching for 22 years. This is the only place I've worked where the parents and the school are genuinely on the same team. Your support means more to us than you know." },
@@ -126,7 +126,7 @@ const CRM_OPTIONS = ["Raiser's Edge / RE NXT", "Veracross", "Blackbaud (other)",
 
 // ─── URL hash encoding / decoding ─────────────────────────────────────────────
 
-function encodePreviewHash(form) {
+function encodePreviewHash(form, logo = null) {
   const data = {
     sn: form.schoolName,
     fn: form.fundName,
@@ -139,6 +139,7 @@ function encodePreviewHash(form) {
     email: form.email,
     ch: form.showChallenges ? 1 : 0,
     lb: form.showLeaderboards ? 1 : 0,
+    ...(logo ? { logo } : {}),
   };
   // btoa doesn't handle non-ASCII; encodeURIComponent covers school names with accents etc.
   return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
@@ -160,6 +161,7 @@ function decodePreviewHash(hash) {
       showChallenges: data.ch !== 0,
       showLeaderboards: data.lb !== 0,
       logo: null,
+      logoData: data.logo || null,
     };
   } catch {
     return null;
@@ -392,6 +394,33 @@ function LogoCard({ logoPreview, fn, sn, pc }) {
   );
 }
 
+function resizeLogoForHash(dataUrl) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxW = 400;
+      const scale = Math.min(1, maxW / img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.65));
+    };
+    img.onerror = () => resolve(null);
+    img.src = dataUrl;
+  });
+}
+
+function useIsMobile(bp = 768) {
+  const [m, setM] = useState(() => window.innerWidth < bp);
+  useEffect(() => {
+    const h = () => setM(window.innerWidth < bp);
+    window.addEventListener("resize", h);
+    return () => window.removeEventListener("resize", h);
+  }, [bp]);
+  return m;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -400,9 +429,14 @@ export default function BoostLeadMagnet() {
   const [step, setStep] = useState("form");
   const [activeTab, setActiveTab] = useState("about");
   const [expandedFaq, setExpandedFaq] = useState(null);
-  const [logoPreview, setLogoPreview] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(() => {
+    try { return localStorage.getItem("boost_logo") || null; } catch { return null; }
+  });
+  const isMobile = useIsMobile();
   const [showGiveModal, setShowGiveModal] = useState(false);
   const [supporterFilter, setSupporterFilter] = useState("");
+  const [commentFilter, setCommentFilter] = useState("");
+  const [logoForHash, setLogoForHash] = useState(null);
   const [form, setForm] = useState({
     schoolName: "", fundName: "", fundraisingGoal: "", supporterGoal: "",
     primaryColor: "#1b603a", secondaryColor: "#76bd22", logo: null,
@@ -420,12 +454,18 @@ export default function BoostLeadMagnet() {
     if (decoded) {
       setForm(decoded);
       setStep("preview");
+      if (decoded.logoData) {
+        setLogoPreview(decoded.logoData);
+        setLogoForHash(decoded.logoData);
+      } else {
+        try { const logo = localStorage.getItem("boost_logo"); if (logo) setLogoPreview(logo); } catch {}
+      }
     }
   }, []);
 
   const handleLogoUpload = (e) => {
     const file = e.target.files[0];
-    if (file) { updateForm("logo", file); const r = new FileReader(); r.onload = (ev) => setLogoPreview(ev.target.result); r.readAsDataURL(file); }
+    if (file) { updateForm("logo", file); const r = new FileReader(); r.onload = (ev) => { setLogoPreview(ev.target.result); try { localStorage.setItem("boost_logo", ev.target.result); } catch {} resizeLogoForHash(ev.target.result).then((resized) => { if (resized) setLogoForHash(resized); }); }; r.readAsDataURL(file); }
   };
 
   const canSubmit = form.schoolName.trim() && form.fundName.trim() && form.fundraisingGoal && form.supporterGoal && form.email.trim();
@@ -433,7 +473,7 @@ export default function BoostLeadMagnet() {
   const handleSubmit = () => {
     if (!canSubmit) return;
     // Build the shareable URL first so we can include it in the sheet row
-    const previewHash = encodePreviewHash(form);
+    const previewHash = encodePreviewHash(form, logoForHash);
     const previewUrl = `${window.location.origin}${window.location.pathname}#${previewHash}`;
     if (SHEET_ENDPOINT && SHEET_ENDPOINT !== "YOUR_APPS_SCRIPT_URL_HERE") {
       fetch(SHEET_ENDPOINT, {
@@ -517,11 +557,11 @@ export default function BoostLeadMagnet() {
           <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
             <FormField label="School Name" required value={form.schoolName} onChange={(v) => updateForm("schoolName", v)} placeholder="e.g., Greenfield Academy" />
             <FormField label="Annual Fund Name" required value={form.fundName} onChange={(v) => updateForm("fundName", v)} placeholder="e.g., The Greenfield Fund" />
-            <div style={{ display: "flex", gap: "1rem" }}>
+            <div style={{ display: "flex", gap: "1rem", flexDirection: isMobile ? "column" : "row" }}>
               <FormField label="Fundraising Goal ($)" required type="number" value={form.fundraisingGoal} onChange={(v) => updateForm("fundraisingGoal", v)} placeholder="e.g., 1000000" style={{ flex: 1 }} />
               <FormField label="Supporter Goal (#)" required type="number" value={form.supporterGoal} onChange={(v) => updateForm("supporterGoal", v)} placeholder="e.g., 500" style={{ flex: 1 }} />
             </div>
-            <div style={{ display: "flex", gap: "1rem" }}>
+            <div style={{ display: "flex", gap: "1rem", flexDirection: isMobile ? "column" : "row" }}>
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>Primary Color</label>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -598,67 +638,116 @@ export default function BoostLeadMagnet() {
       {showGiveModal && <GiveModal sn={sn} sc={sc} pc={pc} onClose={() => setShowGiveModal(false)} />}
 
       {/* Sticky Demo Bar */}
-      <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000, background: "#fff", borderBottom: "2px solid " + sc, padding: "0.5rem 1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 8px rgba(0,0,0,.08)" }}>
-        <div style={{ fontSize: "0.82rem", color: "#535353" }}>Preview of <strong>{sn}</strong> on Boost</div>
-        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-          <CopyLinkButton pc={pc} />
-          <button onClick={() => { window.location.hash = ""; setStep("form"); }} style={{ padding: "0.4rem 1rem", background: "transparent", color: pc, border: "1px solid " + pc, borderRadius: 4, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Edit Details</button>
-          <a href={`https://www.boostmyschool.com/demo?utm_source=lead-magnet&utm_medium=preview&utm_campaign=${encodeURIComponent(sn)}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", padding: "0.4rem 1.25rem", background: sc, color: "#fff", borderRadius: 4, fontSize: "0.78rem", fontWeight: 700, textDecoration: "none", textTransform: "uppercase" }}>Book a Demo for {sn}</a>
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000, background: "#fff", borderBottom: "2px solid " + sc, padding: "0.5rem 1rem", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 8px rgba(0,0,0,.08)" }}>
+        {!isMobile && <div style={{ fontSize: "0.82rem", color: "#535353" }}>Preview of <strong>{sn}</strong> on Boost</div>}
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginLeft: isMobile ? "auto" : 0 }}>
+          {!isMobile && <CopyLinkButton pc={pc} />}
+          <button onClick={() => { window.location.hash = ""; setStep("form"); }} style={{ padding: "0.4rem 1rem", background: "transparent", color: pc, border: "1px solid " + pc, borderRadius: 4, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{isMobile ? "Edit" : "Edit Details"}</button>
+          <a href={`https://www.boostmyschool.com/demo?utm_source=lead-magnet&utm_medium=preview&utm_campaign=${encodeURIComponent(sn)}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", padding: "0.4rem 1.25rem", background: sc, color: "#fff", borderRadius: 4, fontSize: "0.78rem", fontWeight: 700, textDecoration: "none", textTransform: "uppercase" }}>{isMobile ? "Book a Demo" : `Book a Demo for ${sn}`}</a>
         </div>
       </div>
 
-      {/* ── HERO: full viewport height, image behind, overlay on bottom 50% ── */}
-      <div style={{ marginTop: 48, position: "relative", height: "calc(100vh - 48px)", overflow: "hidden" }}>
-        {/* Full-bleed background image */}
-        <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${DEFAULT_HERO_IMAGE})`, backgroundSize: "cover", backgroundPosition: "center top" }} />
-
-        {/* Logo + hamburger over the image */}
-        <div style={{ position: "absolute", top: "1.5rem", left: 0, right: 0, display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "0 2rem", zIndex: 10 }}>
-          <LogoCard logoPreview={logoPreview} fn={fn} sn={sn} pc={pc} />
-          <div style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: "5px", padding: "0.6rem", background: "rgba(0,0,0,.25)", borderRadius: 4 }}>
-            <div style={{ width: 26, height: 3, background: "#fff", borderRadius: 2 }} />
-            <div style={{ width: 26, height: 3, background: "#fff", borderRadius: 2 }} />
-            <div style={{ width: 26, height: 3, background: "#fff", borderRadius: 2 }} />
-          </div>
-        </div>
-
-        {/* Primary color overlay — bottom 50% */}
-        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "50%", background: pc + "ee", borderTop: `4px solid ${sc}` }}>
-          <div style={{ maxWidth: 1100, margin: "0 auto", padding: "2.25rem 2rem 2.5rem", display: "flex", gap: "2.5rem", alignItems: "flex-start", height: "100%", boxSizing: "border-box" }}>
-            <div style={{ flex: 1 }}>
-              <h1 style={{ fontSize: "2.1rem", fontWeight: 700, color: "#fff", margin: "0 0 1rem", lineHeight: 1.2 }}>{fn}</h1>
-              <p style={{ fontSize: "0.95rem", color: "rgba(255,255,255,.93)", lineHeight: 1.75, margin: "0 0 1.25rem", maxWidth: 560 }}>
-                Every gift to {sn} goes directly to the programs, teachers, and experiences that define this place. The {fn} covers what tuition doesn't, and it touches every corner of school life.
-              </p>
-              <div style={{ marginBottom: "1rem", maxWidth: 540 }}>
-                <ProgressBarWithArrow pct={pctFunded} color={sc} height={28} />
-              </div>
-              <div style={{ display: "flex", gap: "3rem", alignItems: "baseline" }}>
-                <div>
-                  <span style={{ fontSize: "1.9rem", fontWeight: 700, color: "#fff" }}>{fmtD(amtRaised)}</span>
-                  <div style={{ color: "rgba(255,255,255,.75)", fontSize: "0.88rem" }}>raised of {fmtD(goalNum)} goal</div>
-                </div>
-                <div>
-                  <span style={{ fontSize: "1.9rem", fontWeight: 700, color: "#fff" }}>{fmtC(suppCount)}</span>
-                  <div style={{ color: "rgba(255,255,255,.75)", fontSize: "0.88rem", textDecoration: "underline", cursor: "pointer" }} onClick={() => setActiveTab("supporters")}>supporters</div>
-                </div>
+      {/* ── HERO ── */}
+      {isMobile ? (
+        <div style={{ marginTop: 48 }}>
+          <div style={{ position: "relative", height: 220, backgroundImage: `url(${DEFAULT_HERO_IMAGE})`, backgroundSize: "cover", backgroundPosition: "center top" }}>
+            <div style={{ position: "absolute", top: "1rem", left: "1rem" }}>
+              <div style={{ background: "#fff", borderRadius: 4, padding: "0.5rem 0.85rem", display: "flex", alignItems: "center", gap: "0.5rem", boxShadow: "0 2px 8px rgba(0,0,0,.15)" }}>
+                {logoPreview ? (
+                  <img src={logoPreview} alt={sn} style={{ height: 36, maxWidth: 120, objectFit: "contain" }} />
+                ) : (
+                  <>
+                    <CrestIcon color={pc} size={28} />
+                    <div style={{ fontSize: "0.8rem", fontWeight: 700, color: pc, lineHeight: 1.2 }}>{fn}</div>
+                  </>
+                )}
               </div>
             </div>
-            <div style={{ flex: "0 0 280px", paddingTop: "0.25rem" }}>
-              {form.showChallenges && (
-                <div onClick={() => setActiveTab("challenges")} style={{ background: "#fff", border: `1px solid ${sc}`, borderRadius: 4, padding: "0.7rem 1rem", marginBottom: "1rem", fontSize: "0.88rem", color: "#333", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <span style={{ color: sc }}>⚡</span> There is 1 active challenge!
+            <div style={{ position: "absolute", top: "1rem", right: "1rem", cursor: "pointer", display: "flex", flexDirection: "column", gap: "5px", padding: "0.6rem", background: "rgba(0,0,0,.25)", borderRadius: 4 }}>
+              <div style={{ width: 26, height: 3, background: "#fff", borderRadius: 2 }} />
+              <div style={{ width: 26, height: 3, background: "#fff", borderRadius: 2 }} />
+              <div style={{ width: 26, height: 3, background: "#fff", borderRadius: 2 }} />
+            </div>
+          </div>
+          <div style={{ background: pc + "ee", borderTop: `4px solid ${sc}`, padding: "1.25rem 1rem" }}>
+            <h1 style={{ fontSize: "1.4rem", fontWeight: 700, color: "#fff", margin: "0 0 0.75rem", lineHeight: 1.2 }}>{fn}</h1>
+            <p style={{ fontSize: "0.9rem", color: "rgba(255,255,255,.93)", lineHeight: 1.7, margin: "0 0 1rem" }}>
+              Every gift to {sn} goes directly to the programs, teachers, and experiences that define this place. The {fn} covers what tuition doesn't, and it touches every corner of school life.
+            </p>
+            <div style={{ marginBottom: "0.85rem" }}>
+              <ProgressBarWithArrow pct={pctFunded} color={sc} height={24} />
+            </div>
+            <div style={{ display: "flex", gap: "2rem", alignItems: "baseline", marginBottom: "1rem" }}>
+              <div>
+                <span style={{ fontSize: "1.5rem", fontWeight: 700, color: "#fff" }}>{fmtD(amtRaised)}</span>
+                <div style={{ color: "rgba(255,255,255,.75)", fontSize: "0.82rem" }}>raised of {fmtD(goalNum)} goal</div>
+              </div>
+              <div>
+                <span style={{ fontSize: "1.5rem", fontWeight: 700, color: "#fff" }}>{fmtC(suppCount)}</span>
+                <div style={{ color: "rgba(255,255,255,.75)", fontSize: "0.82rem", textDecoration: "underline", cursor: "pointer" }} onClick={() => { setActiveTab("supporters"); setTimeout(() => document.getElementById("preview-tabs")?.scrollIntoView({ behavior: "smooth" }), 50); }}>supporters</div>
+              </div>
+            </div>
+            {form.showChallenges && (
+              <div onClick={() => setActiveTab("challenges")} style={{ background: "#fff", border: `1px solid ${sc}`, borderRadius: 4, padding: "0.7rem 1rem", marginBottom: "1rem", fontSize: "0.88rem", color: "#333", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <span style={{ color: sc }}>⚡</span> There is 1 active challenge!
+              </div>
+            )}
+            <CTAButton />
+          </div>
+        </div>
+      ) : (
+        <div style={{ marginTop: 48, position: "relative", height: "calc(100vh - 48px)", overflow: "hidden" }}>
+          {/* Full-bleed background image */}
+          <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${DEFAULT_HERO_IMAGE})`, backgroundSize: "cover", backgroundPosition: "center top" }} />
+
+          {/* Logo + hamburger over the image */}
+          <div style={{ position: "absolute", top: "1.5rem", left: 0, right: 0, display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "0 2rem", zIndex: 10 }}>
+            <LogoCard logoPreview={logoPreview} fn={fn} sn={sn} pc={pc} />
+            <div style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: "5px", padding: "0.6rem", background: "rgba(0,0,0,.25)", borderRadius: 4 }}>
+              <div style={{ width: 26, height: 3, background: "#fff", borderRadius: 2 }} />
+              <div style={{ width: 26, height: 3, background: "#fff", borderRadius: 2 }} />
+              <div style={{ width: 26, height: 3, background: "#fff", borderRadius: 2 }} />
+            </div>
+          </div>
+
+          {/* Primary color overlay — bottom 50% */}
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "50%", background: pc + "ee", borderTop: `4px solid ${sc}` }}>
+            <div style={{ maxWidth: 1100, margin: "0 auto", padding: "2.25rem 2rem 2.5rem", display: "flex", gap: "2.5rem", alignItems: "flex-start", height: "100%", boxSizing: "border-box" }}>
+              <div style={{ flex: 1 }}>
+                <h1 style={{ fontSize: "2.1rem", fontWeight: 700, color: "#fff", margin: "0 0 1rem", lineHeight: 1.2 }}>{fn}</h1>
+                <p style={{ fontSize: "0.95rem", color: "rgba(255,255,255,.93)", lineHeight: 1.75, margin: "0 0 1.25rem", maxWidth: 560 }}>
+                  Every gift to {sn} goes directly to the programs, teachers, and experiences that define this place. The {fn} covers what tuition doesn't, and it touches every corner of school life.
+                </p>
+                <div style={{ marginBottom: "1rem", maxWidth: 540 }}>
+                  <ProgressBarWithArrow pct={pctFunded} color={sc} height={28} />
                 </div>
-              )}
-              <CTAButton />
+                <div style={{ display: "flex", gap: "3rem", alignItems: "baseline" }}>
+                  <div>
+                    <span style={{ fontSize: "1.9rem", fontWeight: 700, color: "#fff" }}>{fmtD(amtRaised)}</span>
+                    <div style={{ color: "rgba(255,255,255,.75)", fontSize: "0.88rem" }}>raised of {fmtD(goalNum)} goal</div>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: "1.9rem", fontWeight: 700, color: "#fff" }}>{fmtC(suppCount)}</span>
+                    <div style={{ color: "rgba(255,255,255,.75)", fontSize: "0.88rem", textDecoration: "underline", cursor: "pointer" }} onClick={() => { setActiveTab("supporters"); setTimeout(() => document.getElementById("preview-tabs")?.scrollIntoView({ behavior: "smooth" }), 50); }}>supporters</div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ flex: "0 0 280px", paddingTop: "0.25rem" }}>
+                {form.showChallenges && (
+                  <div onClick={() => setActiveTab("challenges")} style={{ background: "#fff", border: `1px solid ${sc}`, borderRadius: 4, padding: "0.7rem 1rem", marginBottom: "1rem", fontSize: "0.88rem", color: "#333", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <span style={{ color: sc }}>⚡</span> There is 1 active challenge!
+                  </div>
+                )}
+                <CTAButton />
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* ── GIVING BUCKETS ── */}
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem 1.5rem 1rem" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.25rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: "1.25rem" }}>
           {GIVING_BUCKETS.map((b, i) => (
             <div key={i} style={{ background: "#fff", borderRadius: 4, boxShadow: "0 1px 4px rgba(0,0,0,.08)", overflow: "hidden", display: "flex", flexDirection: "column", border: "1px solid #f0f0f0" }}>
               <div style={{ height: 200, overflow: "hidden" }}>
@@ -675,7 +764,7 @@ export default function BoostLeadMagnet() {
       </div>
 
       {/* ── TAB NAVIGATION ── */}
-      <div style={{ background: pc, marginTop: "1rem" }}>
+      <div id="preview-tabs" style={{ background: pc, marginTop: "1rem" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 1.5rem", display: "flex", justifyContent: "center", gap: "0.25rem", flexWrap: "wrap" }}>
           {TABS.map((t) => (
             <button key={t.key} onClick={() => setActiveTab(t.key)} style={{ padding: "0.9rem 1rem", background: "transparent", border: "none", cursor: "pointer", fontSize: "0.9rem", fontWeight: 600, fontFamily: "inherit", color: "#fff", borderBottom: activeTab === t.key ? "3px solid rgba(255,255,255,.85)" : "3px solid transparent", display: "flex", alignItems: "center", gap: "0.5rem", transition: "border-color 0.2s" }}>
@@ -689,7 +778,7 @@ export default function BoostLeadMagnet() {
       </div>
 
       {/* ── TAB CONTENT + SIDEBAR ── */}
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem 1.5rem", display: "flex", gap: "3rem" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "1.5rem 1rem" : "2rem 1.5rem", display: "flex", flexDirection: isMobile ? "column" : "row", gap: "3rem" }}>
         <div style={{ flex: 1, minWidth: 0 }}>
 
           {/* ── ABOUT ── */}
@@ -872,7 +961,7 @@ export default function BoostLeadMagnet() {
                   ))}
                 </select>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "1.25rem" }}>
                 {filteredSupporters.map((s, i) => (
                   <div key={i} style={{ background: "#fff", border: "1px solid #e9e9e9", borderRadius: 4, padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                     <div style={{ fontWeight: 700, color: "#333", fontSize: "1rem" }}>{s.name}</div>
@@ -899,8 +988,8 @@ export default function BoostLeadMagnet() {
               </h2>
               <div style={{ marginBottom: "0.75rem" }}>
                 <label style={{ fontSize: "0.85rem", color: "#888", display: "block", marginBottom: "0.35rem" }}>Show comments by affiliation</label>
-                <select style={{ width: "100%", padding: "0.65rem 0.85rem", border: "1px solid #e0e0e0", borderRadius: 4, fontSize: "0.9rem", color: "#555", fontFamily: "inherit", background: "#fff" }}>
-                  <option>Select affiliation(s)...</option>
+                <select value={commentFilter} onChange={(e) => setCommentFilter(e.target.value)} style={{ width: "100%", padding: "0.65rem 0.85rem", border: "1px solid #e0e0e0", borderRadius: 4, fontSize: "0.9rem", color: "#555", fontFamily: "inherit", background: "#fff" }}>
+                  <option value="">Select affiliation(s)...</option>
                   {SUPPORTER_FILTER_OPTIONS.map((opt, i) => <option key={i} value={opt}>{opt}</option>)}
                 </select>
               </div>
@@ -911,9 +1000,19 @@ export default function BoostLeadMagnet() {
                   <input type="text" placeholder="" style={{ width: "100%", padding: "0.65rem 0.85rem 0.65rem 2.25rem", border: "1px solid #e0e0e0", borderRadius: 4, fontSize: "0.9rem", fontFamily: "inherit", boxSizing: "border-box" }} />
                 </div>
               </div>
-              <div style={{ columnCount: 2, columnGap: "1.25rem" }}>
-                {[...MOCK_COMMENTS].sort((a, b) => (b.image ? 1 : 0) - (a.image ? 1 : 0)).map((c, i) => (
-                  <div key={i} style={{ breakInside: "avoid", background: "#fff", border: "1px solid #e9e9e9", borderRadius: 4, overflow: "hidden", marginBottom: "1.25rem" }}>
+              {(() => {
+                const matchFilter = (aff) => {
+                  if (!commentFilter) return true;
+                  if (commentFilter === "Current Parent") return /^Parent/.test(aff);
+                  if (commentFilter === "Past Parent") return /^Past Parent/.test(aff);
+                  if (commentFilter === "Alumni") return /^Alumni/.test(aff);
+                  return aff === commentFilter;
+                };
+                const sorted = [...MOCK_COMMENTS]
+                  .sort((a, b) => (b.image ? 1 : 0) - (a.image ? 1 : 0))
+                  .filter((c) => matchFilter(c.affiliation));
+                const renderCard = (c, i) => (
+                  <div key={i} style={{ background: "#fff", border: "1px solid #e9e9e9", borderRadius: 4, overflow: "hidden", marginBottom: "1.25rem" }}>
                     <div style={{ display: "flex", gap: "0.85rem", alignItems: "flex-start", padding: "1.25rem 1.25rem 0" }}>
                       <CrestIcon color={pc} size={42} logoUrl={logoPreview} />
                       <div>
@@ -928,8 +1027,19 @@ export default function BoostLeadMagnet() {
                     )}
                     <p style={{ fontSize: "0.92rem", color: "#555", margin: 0, padding: "0.85rem 1.25rem 1.25rem", lineHeight: 1.65 }}>{c.text}</p>
                   </div>
-                ))}
-              </div>
+                );
+                if (isMobile) {
+                  return <div>{sorted.map(renderCard)}</div>;
+                }
+                const left = sorted.filter((_, i) => i % 2 === 0);
+                const right = sorted.filter((_, i) => i % 2 === 1);
+                return (
+                  <div style={{ display: "flex", gap: "1.25rem", alignItems: "flex-start" }}>
+                    <div style={{ flex: 1 }}>{left.map(renderCard)}</div>
+                    <div style={{ flex: 1 }}>{right.map(renderCard)}</div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
@@ -939,7 +1049,7 @@ export default function BoostLeadMagnet() {
         </div>
 
         {/* ── SIDEBAR ── */}
-        {showSidebar && (
+        {showSidebar && !isMobile && (
           <div style={{ flex: "0 0 280px" }}>
             <RecentActivitySidebar pc={pc} />
           </div>

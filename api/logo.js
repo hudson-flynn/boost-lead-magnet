@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     const { logo } = req.body || {};
     if (!logo) return res.status(400).json({ error: "No logo provided" });
     const id = Math.random().toString(36).slice(2, 8); // 6-char ID
-    const setResult = await redis(["SET", `logo:${id}`, logo, "EX", 2592000]); // 30-day TTL
+    const setResult = await redis(["SET", `logo:${id}`, logo, "EX", 7776000]); // 90-day TTL
     if (setResult.error) return res.status(500).json({ error: "Redis SET failed", detail: setResult.error });
     if (setResult.result !== "OK") return res.status(500).json({ error: "Redis SET unexpected result", detail: setResult });
     return res.json({ id });
